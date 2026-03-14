@@ -1,0 +1,71 @@
+import { Component, inject, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ReadingService } from '../../../core/services/reading.service';
+import { FileUploadService } from '../../../core/services/file-upload.service';
+
+@Component({
+  selector: 'app-question-panel',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './question-panel.component.html',
+  styleUrl: './question-panel.component.scss'
+})
+export class QuestionPanelComponent {
+  questionChanged = output<string>();
+
+  private readonly readingService = inject(ReadingService);
+  private readonly fileUploadService = inject(FileUploadService);
+
+  question = '';
+  fileName = '';
+  fileError = '';
+  isDragOver = false;
+
+  onQuestionChange(): void {
+    this.readingService.setQuestion(this.question);
+    this.questionChanged.emit(this.question);
+  }
+
+  onFileSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) this.processFile(file);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.processFile(file);
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(): void {
+    this.isDragOver = false;
+  }
+
+  private async processFile(file: File): Promise<void> {
+    this.fileError = '';
+    try {
+      const content = await this.fileUploadService.readTextFile(file);
+      this.fileName = file.name;
+      this.readingService.setFileContent(content);
+      if (!this.question && content.length > 0) {
+        this.question = content.slice(0, 500);
+        this.readingService.setQuestion(this.question);
+      }
+    } catch (err: any) {
+      this.fileError = err.message ?? 'Failed to read file';
+    }
+  }
+
+  clearFile(): void {
+    this.fileName = '';
+    this.readingService.setFileContent('');
+  }
+}
