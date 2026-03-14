@@ -1,0 +1,61 @@
+<app-star-field />
+
+<main class="results-page">
+  <header class="page-header">
+    <h1 class="title">✦ Your Reading ✦</h1>
+    @if (session().question) {
+      <p class="question-display">"{{ session().question }}"</p>
+    }
+    <p class="system-label">{{ session().system | titlecase }} · {{ session().spreadType }}</p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <span class="loading-symbol">✦</span>
+      <p>Consulting the oracle…</p>
+    </div>
+  }
+
+  @if (apiResult(); as result) {
+    <section class="interpretation-section">
+      <h2 class="section-title">Interpretation</h2>
+      <p class="interpretation-text">{{ result.interpretation }}</p>
+    </section>
+  }
+
+  <section class="cards-section">
+    <h2 class="section-title">The Cards</h2>
+    <div class="cards-list">
+      @for (drawn of session().drawnCards; track $index) {
+        <div class="result-card">
+          <div class="card-header">
+            <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
+            <div class="card-title-group">
+              <h3 class="card-name">{{ drawn.card.name }}</h3>
+              <span class="position-label">{{ drawn.positionLabel }}</span>
+            </div>
+            @if (drawn.isReversed) {
+              <span class="reversed-badge">↓ Reversed</span>
+            }
+          </div>
+
+          @if (getCardInsight(drawn.card.id); as insight) {
+            <p class="card-insight">{{ insight }}</p>
+          } @else {
+            <p class="card-meaning">{{ drawn.card.meaning }}</p>
+          }
+
+          <div class="keywords">
+            @for (kw of drawn.card.keywords; track kw) {
+              <span class="keyword">{{ kw }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <div class="action-row">
+    <button class="btn-new" (click)="newReading()">✦ New Reading</button>
+  </div>
+</main>

@@ -1,0 +1,78 @@
+<app-star-field />
+
+<main class="reading-page">
+  <header class="page-header">
+    <h1 class="title">✦ Front Seer ✦</h1>
+    <p class="subtitle">Consult the Oracle</p>
+  </header>
+
+  @if (!hasDrawnCards()) {
+    <section class="setup-section">
+      <app-system-selector
+        [selected]="session().system"
+        (selectedChange)="onSystemChange($event)"
+      />
+
+      <app-spread-selector
+        [selected]="session().spreadType"
+        (selectedChange)="onSpreadChange($event)"
+      />
+
+      <app-question-panel />
+
+      <div class="draw-section">
+        <button class="btn-draw" (click)="drawCards()">
+          <span class="btn-icon">✦</span> Draw Cards
+        </button>
+      </div>
+    </section>
+  } @else {
+    <section class="cards-section">
+      <div class="cards-header">
+        <h2>Your Cards</h2>
+        <button class="btn-ghost" (click)="reset()">↺ Redraw</button>
+      </div>
+
+      <div class="cards-grid" [attr.data-count]="session().drawnCards.length">
+        @for (drawn of session().drawnCards; track $index) {
+          <div class="card-slot" [class.revealed]="drawn.revealed">
+            <p class="position-label">{{ drawn.positionLabel }}</p>
+
+            @if (drawn.revealed) {
+              <div class="card-face">
+                <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
+                <h3 class="card-name">
+                  {{ drawn.card.name }}
+                  @if (drawn.isReversed) {
+                    <span class="reversed-badge">↓ Reversed</span>
+                  }
+                </h3>
+                <p class="card-meaning">{{ drawn.card.meaning }}</p>
+                <div class="keywords">
+                  @for (kw of drawn.card.keywords; track kw) {
+                    <span class="keyword">{{ kw }}</span>
+                  }
+                </div>
+              </div>
+            } @else {
+              <button class="card-back" (click)="revealCard($index)" aria-label="Reveal card">
+                <span class="card-back-symbol">✦</span>
+                <span class="reveal-text">Tap to reveal</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="action-row">
+        @if (!canSubmit()) {
+          <button class="btn-secondary" (click)="revealAll()">Reveal All</button>
+        } @else {
+          <button class="btn-draw" (click)="proceed()">
+            <span class="btn-icon">🌟</span> Get Your Reading
+          </button>
+        }
+      </div>
+    </section>
+  }
+</main>
