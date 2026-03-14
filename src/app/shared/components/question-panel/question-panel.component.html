@@ -1,0 +1,46 @@
+<div class="question-panel">
+  <div class="panel-header">
+    <h3>Your Question</h3>
+    <span class="optional-tag">optional</span>
+  </div>
+
+  <textarea
+    class="question-input"
+    placeholder="What guidance do you seek? Enter your question here, or let the cards speak freely..."
+    [(ngModel)]="question"
+    (ngModelChange)="onQuestionChange()"
+    rows="3"
+    maxlength="1000"
+  ></textarea>
+
+  <div class="upload-zone"
+    [class.drag-over]="isDragOver"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)">
+
+    @if (!fileName) {
+      <label class="upload-label" for="file-input">
+        <span class="upload-icon">📄</span>
+        <span>Drop a .txt file or <span class="browse-link">browse</span></span>
+      </label>
+      <input
+        id="file-input"
+        type="file"
+        accept=".txt"
+        (change)="onFileSelect($event)"
+        class="file-input"
+      />
+    } @else {
+      <div class="file-loaded">
+        <span class="file-icon">📝</span>
+        <span class="file-name">{{ fileName }}</span>
+        <button class="clear-file" (click)="clearFile()" aria-label="Remove file">✕</button>
+      </div>
+    }
+  </div>
+
+  @if (fileError) {
+    <p class="file-error">{{ fileError }}</p>
+  }
+</div>

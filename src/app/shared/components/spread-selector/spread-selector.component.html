@@ -1,0 +1,30 @@
+<div class="spread-selector">
+  <h3 class="selector-label">Spread Type</h3>
+  <div class="spreads-row">
+    @for (spread of spreads; track spread.key) {
+      <button
+        class="spread-btn"
+        [class.active]="selected() === spread.key"
+        (click)="select(spread.key)"
+        [attr.aria-pressed]="selected() === spread.key"
+      >
+        <span class="spread-count">{{ spread.icon }}</span>
+        <span class="spread-name">{{ spread.label }}</span>
+      </button>
+    }
+  </div>
+
+  @if (selected() === 'custom') {
+    <div class="custom-count">
+      <label for="custom-count-input">Number of cards:</label>
+      <input
+        id="custom-count-input"
+        type="number"
+        min="1"
+        max="15"
+        [(ngModel)]="customCount"
+        (ngModelChange)="onCustomCountChange()"
+      />
+    </div>
+  }
+</div>
