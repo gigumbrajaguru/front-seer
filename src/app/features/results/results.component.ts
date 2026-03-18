@@ -5,6 +5,7 @@ import { ReadingService } from '../../core/services/reading.service';
 import { ReadingApiService } from '../../core/services/reading-api.service';
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
 import { ApiReadingResponse } from '../../core/models/session.model';
+import { DivinationSystem } from '../../core/models/card.model';
 
 @Component({
   selector: 'app-results',
@@ -20,47 +21,93 @@ export class ResultsComponent implements OnInit {
 
   readonly session = this.readingService.session;
   readonly isLoading = signal(false);
-  readonly apiResult = signal<ApiReadingResponse | null>(null);
+  readonly apiResults = signal<(ApiReadingResponse | null)[]>([]);
   readonly apiError = signal<string | null>(null);
 
+  readonly systemLabels: Record<DivinationSystem, string> = {
+    'tarot': 'Tarot',
+    'lenormand': 'Lenormand',
+    'runes': 'Runes',
+    'iching': 'I Ching',
+    'belline': 'Belline',
+    'playing-cards': 'Playing Cards',
+    'kipper': 'Kipper',
+    'sibilla': 'Sibilla',
+    'oracle-marseille': 'Oracle Marseille',
+    'oracle-etteilla': 'Oracle Etteilla',
+    'oracle-generic': 'Oracle Generic',
+  };
+
+  readonly systemIcons: Record<DivinationSystem, string> = {
+    'tarot': '🌟',
+    'lenormand': '🍀',
+    'runes': 'ᚠ',
+    'iching': '䷀',
+    'belline': '🔮',
+    'playing-cards': '♠',
+    'kipper': '🪄',
+    'sibilla': '🌙',
+    'oracle-marseille': '☀️',
+    'oracle-etteilla': '⚜️',
+    'oracle-generic': '✨',
+  };
+
   ngOnInit(): void {
-    if (this.session().drawnCards.length === 0) {
+    const readings = this.session().oracleReadings;
+    if (!readings || readings.length === 0 || readings.every(r => r.drawnCards.length === 0)) {
       this.router.navigate(['/']);
       return;
     }
-    this.fetchInterpretation();
+    this.fetchInterpretations();
   }
 
-  private fetchInterpretation(): void {
+  private fetchInterpretations(): void {
     const s = this.session();
+    const readings = s.oracleReadings;
+
     this.isLoading.set(true);
-    this.readingApiService
-      .submitReading({
-        question: s.question,
-        fileContent: s.fileContent,
-        system: s.system,
-        spreadType: s.spreadType,
-        cards: s.drawnCards.map((dc) => ({
-          id: dc.card.id,
-          name: dc.card.name,
-          position: dc.positionLabel,
-          isReversed: dc.isReversed,
-        })),
-      })
-      .subscribe({
-        next: (result) => {
-          this.apiResult.set(result);
-          this.isLoading.set(false);
-        },
-        error: () => {
-          this.apiError.set(null);
-          this.isLoading.set(false);
-        },
-      });
+    this.apiResults.set(new Array(readings.length).fill(null));
+
+    let completed = 0;
+
+    readings.forEach((reading, index) => {
+      this.readingApiService
+        .submitReading({
+          question: s.question,
+          fileContent: s.fileContent,
+          system: reading.system,
+          spreadType: reading.spreadType,
+          cards: reading.drawnCards.map(dc => ({
+            id: dc.card.id,
+            name: dc.card.name,
+            position: dc.positionLabel,
+            isReversed: dc.isReversed,
+          })),
+        })
+        .subscribe({
+          next: result => {
+            this.apiResults.update(arr => {
+              const updated = [...arr];
+              updated[index] = result;
+              return updated;
+            });
+            completed++;
+            if (completed >= readings.length) {
+              this.isLoading.set(false);
+            }
+          },
+          error: () => {
+            completed++;
+            if (completed >= readings.length) {
+              this.isLoading.set(false);
+            }
+          },
+        });
+    });
   }
 
-  getCardInsight(cardId: number): string | null {
-    return this.apiResult()?.cardInsights?.find((i) => i.cardId === cardId)?.insight ?? null;
+  getCardInsight(oracleIndex: number, cardId: number): string | null {
+    return this.apiResults()[oracleIndex]?.cardInsights?.find(i => i.cardId === cardId)?.insight ?? null;
   }
 
   newReading(): void {

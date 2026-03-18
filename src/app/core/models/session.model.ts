@@ -1,13 +1,22 @@
 import { DivinationSystem, DrawnCard } from './card.model';
 import { SpreadType } from './spread.model';
 
-export interface ReadingSession {
-  question: string;
-  fileContent?: string;
+export interface OracleReading {
   system: DivinationSystem;
   spreadType: SpreadType;
   customCount?: number;
   drawnCards: DrawnCard[];
+}
+
+export type ReadingStep = 'question' | 'oracle-selection' | 'spread-selection' | 'drawing';
+
+export interface ReadingSession {
+  question: string;
+  fileContent?: string;
+  step: ReadingStep;
+  selectedOracles: DivinationSystem[];
+  oracleReadings: OracleReading[];
+  currentOracleIndex: number;
 }
 
 export interface ApiReadingRequest {

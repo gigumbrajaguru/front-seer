@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
@@ -29,20 +29,67 @@ export class ReadingComponent {
   private readonly router = inject(Router);
 
   readonly session = this.readingService.session;
+  readonly currentOracle = this.readingService.currentOracle;
   readonly hasDrawnCards = this.readingService.hasDrawnCards;
-  readonly canSubmit = this.readingService.canSubmit;
+  readonly canSubmitCurrentOracle = this.readingService.canSubmitCurrentOracle;
+  readonly isLastOracle = this.readingService.isLastOracle;
+  readonly allOraclesComplete = this.readingService.allOraclesComplete;
 
-  onSystemChange(system: DivinationSystem): void {
-    this.readingService.setSystem(system);
+  readonly systemLabels: Record<DivinationSystem, string> = {
+    'tarot': 'Tarot',
+    'lenormand': 'Lenormand',
+    'runes': 'Runes',
+    'iching': 'I Ching',
+    'belline': 'Belline',
+    'playing-cards': 'Playing Cards',
+    'kipper': 'Kipper',
+    'sibilla': 'Sibilla',
+    'oracle-marseille': 'Oracle Marseille',
+    'oracle-etteilla': 'Oracle Etteilla',
+    'oracle-generic': 'Oracle Generic',
+  };
+
+  readonly systemIcons: Record<DivinationSystem, string> = {
+    'tarot': '🌟',
+    'lenormand': '🍀',
+    'runes': 'ᚠ',
+    'iching': '䷀',
+    'belline': '🔮',
+    'playing-cards': '♠',
+    'kipper': '🪄',
+    'sibilla': '🌙',
+    'oracle-marseille': '☀️',
+    'oracle-etteilla': '⚜️',
+    'oracle-generic': '✨',
+  };
+
+  submitQuestion(): void {
+    const q = this.session().question.trim();
+    if (!q) return;
+    this.readingService.submitQuestion();
   }
 
-  onSpreadChange(event: { type: SpreadType; customCount?: number }): void {
-    this.readingService.setSpreadType(event.type, event.customCount);
+  toggleOracle(system: DivinationSystem): void {
+    this.readingService.toggleOracle(system);
+  }
+
+  submitOracles(): void {
+    if (this.session().selectedOracles.length === 0) return;
+    this.readingService.submitOracleSelection();
+  }
+
+  onSpreadChange(index: number, event: { type: SpreadType; customCount?: number }): void {
+    this.readingService.setSpreadForOracle(index, event.type, event.customCount);
+  }
+
+  submitSpreads(): void {
+    this.readingService.submitSpreadSelection();
   }
 
   drawCards(): void {
-    const { system, spreadType, customCount } = this.session();
-    const cards = this.divinationService.drawCards(system, spreadType, customCount);
+    const oracle = this.currentOracle();
+    if (!oracle) return;
+    const cards = this.divinationService.drawCards(oracle.system, oracle.spreadType, oracle.customCount);
     this.readingService.setDrawnCards(cards);
   }
 
@@ -54,11 +101,15 @@ export class ReadingComponent {
     this.readingService.revealAll();
   }
 
+  nextOracle(): void {
+    this.readingService.nextOracle();
+  }
+
   proceed(): void {
     this.router.navigate(['/results']);
   }
 
-  reset(): void {
-    this.readingService.reset();
+  redraw(): void {
+    this.readingService.resetCurrentOracle();
   }
 }
