@@ -3,6 +3,11 @@ import { DivinationCard, DrawnCard, DivinationSystem } from '../models/card.mode
 import { SpreadType, SPREAD_CONFIGS } from '../models/spread.model';
 import { DECK_MAP } from '../../data/index';
 
+export interface ShuffledCard {
+  card: DivinationCard;
+  isReversed: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DivinationService {
 
@@ -10,20 +15,33 @@ export class DivinationService {
     return DECK_MAP[system] ?? [];
   }
 
-  drawCards(system: DivinationSystem, spreadType: SpreadType, customCount?: number): DrawnCard[] {
+  /** Returns the full deck shuffled with reversals pre-determined */
+  getShuffledDeck(system: DivinationSystem): ShuffledCard[] {
     const deck = this.getDeck(system);
-    const config = SPREAD_CONFIGS[spreadType];
-    const count = spreadType === 'custom' ? (customCount ?? 1) : config.count;
-
     const shuffled = this.shuffle([...deck]);
-    const drawn = shuffled.slice(0, Math.min(count, shuffled.length));
-
-    return drawn.map((card, index) => ({
+    return shuffled.map(card => ({
       card,
-      isReversed: card.reversible ? Math.random() < 0.5 : false,
-      positionLabel: this.getPositionLabel(spreadType, index, count),
-      revealed: false
+      isReversed: card.reversible ? Math.random() < 0.5 : false
     }));
+  }
+
+  /** Converts user-selected cards into DrawnCard[] for the session */
+  buildDrawnCards(
+    selected: ShuffledCard[],
+    spreadType: SpreadType,
+    customCount?: number
+  ): DrawnCard[] {
+    return selected.map((item, index) => ({
+      card: item.card,
+      isReversed: item.isReversed,
+      positionLabel: this.getPositionLabel(spreadType, index, selected.length),
+      revealed: true
+    }));
+  }
+
+  getRequiredCount(spreadType: SpreadType, customCount?: number): number {
+    if (spreadType === 'custom') return customCount ?? 1;
+    return SPREAD_CONFIGS[spreadType]?.count ?? 1;
   }
 
   private getPositionLabel(spreadType: SpreadType, index: number, total: number): string {

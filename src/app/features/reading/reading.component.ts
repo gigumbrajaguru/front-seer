@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
-import { DivinationService } from '../../core/services/divination.service';
+import { DivinationService, ShuffledCard } from '../../core/services/divination.service';
 import { SystemSelectorComponent } from '../../shared/components/system-selector/system-selector.component';
 import { SpreadSelectorComponent } from '../../shared/components/spread-selector/spread-selector.component';
 import { QuestionPanelComponent } from '../../shared/components/question-panel/question-panel.component';
@@ -30,10 +30,25 @@ export class ReadingComponent {
 
   readonly session = this.readingService.session;
   readonly currentOracle = this.readingService.currentOracle;
-  readonly hasDrawnCards = this.readingService.hasDrawnCards;
-  readonly canSubmitCurrentOracle = this.readingService.canSubmitCurrentOracle;
   readonly isLastOracle = this.readingService.isLastOracle;
-  readonly allOraclesComplete = this.readingService.allOraclesComplete;
+
+  // Local state for card selection phase
+  readonly shuffledDeck = signal<ShuffledCard[]>([]);
+  readonly selectedIndices = signal<number[]>([]);
+
+  readonly requiredCount = computed(() => {
+    const oracle = this.currentOracle();
+    if (!oracle) return 0;
+    return this.divinationService.getRequiredCount(oracle.spreadType, oracle.customCount);
+  });
+
+  readonly selectionComplete = computed(() =>
+    this.selectedIndices().length >= this.requiredCount()
+  );
+
+  readonly hasConfirmedCards = computed(() =>
+    (this.currentOracle()?.drawnCards.length ?? 0) > 0
+  );
 
   readonly systemLabels: Record<DivinationSystem, string> = {
     'tarot': 'Tarot',
@@ -63,9 +78,20 @@ export class ReadingComponent {
     'oracle-generic': '✨',
   };
 
+  constructor() {
+    // Prepare a fresh shuffled deck whenever the oracle changes and cards haven't been confirmed yet
+    effect(() => {
+      const oracle = this.currentOracle();
+      const step = this.session().step;
+      if (step === 'drawing' && oracle && oracle.drawnCards.length === 0) {
+        this.shuffledDeck.set(this.divinationService.getShuffledDeck(oracle.system));
+        this.selectedIndices.set([]);
+      }
+    });
+  }
+
   submitQuestion(): void {
-    const q = this.session().question.trim();
-    if (!q) return;
+    if (!this.session().question.trim()) return;
     this.readingService.submitQuestion();
   }
 
@@ -86,30 +112,55 @@ export class ReadingComponent {
     this.readingService.submitSpreadSelection();
   }
 
-  drawCards(): void {
+  toggleCardSelection(index: number): void {
+    const current = this.selectedIndices();
+    if (current.includes(index)) {
+      this.selectedIndices.set(current.filter(i => i !== index));
+    } else if (current.length < this.requiredCount()) {
+      this.selectedIndices.set([...current, index]);
+    }
+  }
+
+  isCardSelected(index: number): boolean {
+    return this.selectedIndices().includes(index);
+  }
+
+  selectionOrder(index: number): number {
+    return this.selectedIndices().indexOf(index) + 1;
+  }
+
+  confirmSelection(): void {
     const oracle = this.currentOracle();
     if (!oracle) return;
-    const cards = this.divinationService.drawCards(oracle.system, oracle.spreadType, oracle.customCount);
+    const selected = this.selectedIndices().map(i => this.shuffledDeck()[i]);
+    const cards = this.divinationService.buildDrawnCards(selected, oracle.spreadType, oracle.customCount);
     this.readingService.setDrawnCards(cards);
   }
 
-  revealCard(index: number): void {
-    this.readingService.revealCard(index);
-  }
-
-  revealAll(): void {
-    this.readingService.revealAll();
+  reshuffleDeck(): void {
+    const oracle = this.currentOracle();
+    if (!oracle) return;
+    this.shuffledDeck.set(this.divinationService.getShuffledDeck(oracle.system));
+    this.selectedIndices.set([]);
   }
 
   nextOracle(): void {
     this.readingService.nextOracle();
+    // Reset local selection state; effect() will prepare the deck
+    this.selectedIndices.set([]);
+    this.shuffledDeck.set([]);
   }
 
   proceed(): void {
     this.router.navigate(['/results']);
   }
 
-  redraw(): void {
+  redrawCurrentOracle(): void {
     this.readingService.resetCurrentOracle();
+    const oracle = this.currentOracle();
+    if (oracle) {
+      this.shuffledDeck.set(this.divinationService.getShuffledDeck(oracle.system));
+      this.selectedIndices.set([]);
+    }
   }
 }

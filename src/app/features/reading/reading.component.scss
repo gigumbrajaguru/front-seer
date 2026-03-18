@@ -173,6 +173,95 @@
   gap: 1.5rem;
 }
 
+/* Selection header */
+.selection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.selection-instruction {
+  font-size: 0.9rem;
+  color: #c8bdb5;
+  margin: 0;
+
+  strong {
+    color: #d4af6a;
+  }
+}
+
+.selection-progress {
+  font-size: 0.82rem;
+  color: #9b8ea0;
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(212,175,106,0.2);
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
+  transition: all 0.2s;
+
+  &.complete {
+    color: #d4af6a;
+    border-color: rgba(212,175,106,0.5);
+    background: rgba(212,175,106,0.1);
+  }
+}
+
+/* Shuffled deck grid */
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 0.4rem;
+}
+
+.deck-card {
+  aspect-ratio: 2 / 3;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212,175,106,0.18);
+  border-radius: 0.35rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  position: relative;
+  padding: 0;
+
+  &:hover:not(:disabled):not(.selected) {
+    border-color: rgba(212,175,106,0.6);
+    background: rgba(212,175,106,0.08);
+    transform: translateY(-2px);
+  }
+
+  &.selected {
+    background: linear-gradient(135deg, rgba(107,63,160,0.4), rgba(155,44,138,0.4));
+    border-color: #9b2c8a;
+    box-shadow: 0 0 10px rgba(155,44,138,0.35);
+    transform: translateY(-2px);
+  }
+
+  &.disabled,
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.deck-card-back-symbol {
+  font-size: 1rem;
+  color: rgba(212,175,106,0.3);
+}
+
+.deck-card-order {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #d4af6a;
+  letter-spacing: 0.04em;
+}
+
 /* Oracle progress */
 .oracle-progress {
   display: flex;
