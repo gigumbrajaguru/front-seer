@@ -48,7 +48,6 @@
         [selectedSystems]="session().selectedOracles"
         (systemToggled)="toggleOracle($event)"
       />
-
       <div class="draw-section">
         @if (session().selectedOracles.length > 0) {
           <p class="selection-count">
@@ -93,11 +92,12 @@
     </section>
   }
 
-  <!-- Step 4: Drawing (per oracle) -->
+  <!-- Step 4: Drawing — card selection from shuffled deck -->
   @if (session().step === 'drawing') {
     @if (currentOracle(); as oracle) {
       <section class="cards-section">
-        <!-- Oracle progress header -->
+
+        <!-- Oracle progress -->
         <div class="oracle-progress">
           <span class="oracle-progress-label">
             Oracle {{ session().currentOracleIndex + 1 }} of {{ session().oracleReadings.length }}
@@ -113,6 +113,7 @@
           </div>
         </div>
 
+        <!-- Oracle + spread header -->
         <div class="cards-header">
           <div class="cards-header-info">
             <h2>
@@ -121,54 +122,81 @@
             </h2>
             <p class="spread-label">{{ oracle.spreadType }}</p>
           </div>
-          @if (hasDrawnCards()) {
-            <button class="btn-ghost" (click)="redraw()">↺ Redraw</button>
+          @if (!hasConfirmedCards()) {
+            <button class="btn-ghost" (click)="reshuffleDeck()">↺ Reshuffle</button>
+          } @else {
+            <button class="btn-ghost" (click)="redrawCurrentOracle()">↺ Redraw</button>
           }
         </div>
 
-        @if (!hasDrawnCards()) {
-          <div class="draw-section">
-            <p class="draw-hint">Draw your cards for {{ systemLabels[oracle.system] }}</p>
-            <button class="btn-draw" (click)="drawCards()">
-              <span class="btn-icon">✦</span> Draw Cards
+        <!-- Phase A: Card selection from shuffled deck -->
+        @if (!hasConfirmedCards()) {
+          <div class="selection-header">
+            <p class="selection-instruction">
+              Choose <strong>{{ requiredCount() }}</strong> card{{ requiredCount() !== 1 ? 's' : '' }} from the shuffled deck
+            </p>
+            <span class="selection-progress" [class.complete]="selectionComplete()">
+              {{ selectedIndices().length }} / {{ requiredCount() }} selected
+            </span>
+          </div>
+
+          <div class="deck-grid">
+            @for (item of shuffledDeck(); track $index) {
+              <button
+                class="deck-card"
+                [class.selected]="isCardSelected($index)"
+                [class.disabled]="!isCardSelected($index) && selectionComplete()"
+                (click)="toggleCardSelection($index)"
+                [attr.aria-label]="isCardSelected($index) ? 'Deselect card ' + selectionOrder($index) : 'Select card'"
+                [disabled]="!isCardSelected($index) && selectionComplete()"
+              >
+                @if (isCardSelected($index)) {
+                  <span class="deck-card-order">{{ selectionOrder($index) }}</span>
+                } @else {
+                  <span class="deck-card-back-symbol">✦</span>
+                }
+              </button>
+            }
+          </div>
+
+          <div class="action-row">
+            <button
+              class="btn-draw"
+              (click)="confirmSelection()"
+              [disabled]="!selectionComplete()"
+            >
+              <span class="btn-icon">✦</span> Confirm Selection
             </button>
           </div>
-        } @else {
+        }
+
+        <!-- Phase B: Show confirmed cards in spread positions -->
+        @if (hasConfirmedCards()) {
           <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
             @for (drawn of oracle.drawnCards; track $index) {
-              <div class="card-slot" [class.revealed]="drawn.revealed">
+              <div class="card-slot revealed">
                 <p class="position-label">{{ drawn.positionLabel }}</p>
-
-                @if (drawn.revealed) {
-                  <div class="card-face">
-                    <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
-                    <h3 class="card-name">
-                      {{ drawn.card.name }}
-                      @if (drawn.isReversed) {
-                        <span class="reversed-badge">↓ Reversed</span>
-                      }
-                    </h3>
-                    <p class="card-meaning">{{ drawn.card.meaning }}</p>
-                    <div class="keywords">
-                      @for (kw of drawn.card.keywords; track kw) {
-                        <span class="keyword">{{ kw }}</span>
-                      }
-                    </div>
+                <div class="card-face">
+                  <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
+                  <h3 class="card-name">
+                    {{ drawn.card.name }}
+                    @if (drawn.isReversed) {
+                      <span class="reversed-badge">↓ Reversed</span>
+                    }
+                  </h3>
+                  <p class="card-meaning">{{ drawn.card.meaning }}</p>
+                  <div class="keywords">
+                    @for (kw of drawn.card.keywords; track kw) {
+                      <span class="keyword">{{ kw }}</span>
+                    }
                   </div>
-                } @else {
-                  <button class="card-back" (click)="revealCard($index)" aria-label="Reveal card">
-                    <span class="card-back-symbol">✦</span>
-                    <span class="reveal-text">Tap to reveal</span>
-                  </button>
-                }
+                </div>
               </div>
             }
           </div>
 
           <div class="action-row">
-            @if (!canSubmitCurrentOracle()) {
-              <button class="btn-secondary" (click)="revealAll()">Reveal All</button>
-            } @else if (!isLastOracle()) {
+            @if (!isLastOracle()) {
               <button class="btn-draw" (click)="nextOracle()">
                 <span class="btn-icon">✦</span> Next Oracle
               </button>
@@ -179,6 +207,7 @@
             }
           </div>
         }
+
       </section>
     }
   }
