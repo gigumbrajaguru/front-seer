@@ -1,13 +1,15 @@
 <div class="system-selector">
-  <h3 class="selector-label">Choose Your Oracle</h3>
+  <h3 class="selector-label">Choose Your Oracles</h3>
+  <p class="selector-hint">Select one or more oracles to consult</p>
   <div class="systems-grid">
     @for (sys of systems; track sys.key) {
       <button
         class="system-btn"
-        [class.active]="selected() === sys.key"
-        (click)="select(sys.key)"
-        [attr.aria-pressed]="selected() === sys.key"
+        [class.active]="isSelected(sys.key)"
+        (click)="toggle(sys.key)"
+        [attr.aria-pressed]="isSelected(sys.key)"
       >
+        <span class="check-mark">✓</span>
         <span class="sys-icon">{{ sys.icon }}</span>
         <span class="sys-name">{{ sys.label }}</span>
         <span class="sys-count">{{ sys.count }} cards</span>

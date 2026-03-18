@@ -7,7 +7,13 @@
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--text-dim);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.selector-hint {
+  font-size: 0.75rem;
+  color: #9b8ea0;
+  margin: 0 0 0.75rem;
 }
 
 .systems-grid {
@@ -29,6 +35,7 @@
   transition: all 0.2s ease;
   min-width: 90px;
   color: var(--text-dim);
+  position: relative;
 
   &:hover {
     border-color: var(--accent-gold);
@@ -42,7 +49,24 @@
     border-color: var(--accent-gold);
     color: var(--accent-gold);
     box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+
+    .check-mark {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
+}
+
+.check-mark {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.65rem;
+  color: var(--accent-gold);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.15s, transform 0.15s;
+  font-weight: 700;
 }
 
 .sys-icon {

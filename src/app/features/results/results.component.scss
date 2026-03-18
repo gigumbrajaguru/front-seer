@@ -32,12 +32,72 @@
   margin: 0 0 0.4rem;
 }
 
-.system-label {
+.oracle-count-label {
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #9b8ea0;
   margin: 0;
+}
+
+/* Per-oracle section */
+.oracle-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(212, 175, 106, 0.18);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.oracle-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(212, 175, 106, 0.12);
+  padding-bottom: 1rem;
+}
+
+.oracle-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.oracle-section-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  h2 {
+    font-size: 1.2rem;
+    color: #d4af6a;
+    letter-spacing: 0.08em;
+    margin: 0;
+  }
+}
+
+.spread-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9b8ea0;
+}
+
+.interpretation-block {
+  background: rgba(212, 175, 106, 0.06);
+  border: 1px solid rgba(212, 175, 106, 0.15);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.block-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9b8ea0;
+  margin: 0 0 0.5rem;
 }
 
 .loading-state {

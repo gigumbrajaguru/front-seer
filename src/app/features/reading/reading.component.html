@@ -6,73 +6,180 @@
     <p class="subtitle">Consult the Oracle</p>
   </header>
 
-  @if (!hasDrawnCards()) {
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step" [class.active]="session().step === 'question'" [class.done]="session().step !== 'question'">
+      <span class="step-num">1</span>
+      <span class="step-name">Question</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" [class.active]="session().step === 'oracle-selection'" [class.done]="session().step === 'spread-selection' || session().step === 'drawing'">
+      <span class="step-num">2</span>
+      <span class="step-name">Oracles</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" [class.active]="session().step === 'spread-selection'" [class.done]="session().step === 'drawing'">
+      <span class="step-num">3</span>
+      <span class="step-name">Spreads</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" [class.active]="session().step === 'drawing'">
+      <span class="step-num">4</span>
+      <span class="step-name">Reading</span>
+    </div>
+  </div>
+
+  <!-- Step 1: Question -->
+  @if (session().step === 'question') {
     <section class="setup-section">
-      <app-system-selector
-        [selected]="session().system"
-        (selectedChange)="onSystemChange($event)"
-      />
-
-      <app-spread-selector
-        [selected]="session().spreadType"
-        (selectedChange)="onSpreadChange($event)"
-      />
-
       <app-question-panel />
-
       <div class="draw-section">
-        <button class="btn-draw" (click)="drawCards()">
-          <span class="btn-icon">✦</span> Draw Cards
+        <button class="btn-draw" (click)="submitQuestion()" [disabled]="!session().question.trim()">
+          <span class="btn-icon">✦</span> Ask the Oracle
         </button>
       </div>
     </section>
-  } @else {
-    <section class="cards-section">
-      <div class="cards-header">
-        <h2>Your Cards</h2>
-        <button class="btn-ghost" (click)="reset()">↺ Redraw</button>
+  }
+
+  <!-- Step 2: Oracle Selection (multi-select) -->
+  @if (session().step === 'oracle-selection') {
+    <section class="setup-section">
+      <app-system-selector
+        [selectedSystems]="session().selectedOracles"
+        (systemToggled)="toggleOracle($event)"
+      />
+
+      <div class="draw-section">
+        @if (session().selectedOracles.length > 0) {
+          <p class="selection-count">
+            {{ session().selectedOracles.length }} oracle{{ session().selectedOracles.length > 1 ? 's' : '' }} selected
+          </p>
+        }
+        <button
+          class="btn-draw"
+          (click)="submitOracles()"
+          [disabled]="session().selectedOracles.length === 0"
+        >
+          <span class="btn-icon">✦</span>
+          Continue with {{ session().selectedOracles.length > 0 ? session().selectedOracles.length : '' }} Oracle{{ session().selectedOracles.length !== 1 ? 's' : '' }}
+        </button>
       </div>
+    </section>
+  }
 
-      <div class="cards-grid" [attr.data-count]="session().drawnCards.length">
-        @for (drawn of session().drawnCards; track $index) {
-          <div class="card-slot" [class.revealed]="drawn.revealed">
-            <p class="position-label">{{ drawn.positionLabel }}</p>
+  <!-- Step 3: Spread Selection (one per oracle) -->
+  @if (session().step === 'spread-selection') {
+    <section class="setup-section">
+      <h2 class="section-heading">Choose a Spread for Each Oracle</h2>
 
-            @if (drawn.revealed) {
-              <div class="card-face">
-                <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
-                <h3 class="card-name">
-                  {{ drawn.card.name }}
-                  @if (drawn.isReversed) {
-                    <span class="reversed-badge">↓ Reversed</span>
-                  }
-                </h3>
-                <p class="card-meaning">{{ drawn.card.meaning }}</p>
-                <div class="keywords">
-                  @for (kw of drawn.card.keywords; track kw) {
-                    <span class="keyword">{{ kw }}</span>
-                  }
-                </div>
+      @for (reading of session().oracleReadings; track $index) {
+        <div class="oracle-spread-block">
+          <div class="oracle-spread-header">
+            <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
+            <span class="oracle-name">{{ systemLabels[reading.system] }}</span>
+          </div>
+          <app-spread-selector
+            [selected]="reading.spreadType"
+            (selectedChange)="onSpreadChange($index, $event)"
+          />
+        </div>
+      }
+
+      <div class="draw-section">
+        <button class="btn-draw" (click)="submitSpreads()">
+          <span class="btn-icon">✦</span> Begin Reading
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- Step 4: Drawing (per oracle) -->
+  @if (session().step === 'drawing') {
+    @if (currentOracle(); as oracle) {
+      <section class="cards-section">
+        <!-- Oracle progress header -->
+        <div class="oracle-progress">
+          <span class="oracle-progress-label">
+            Oracle {{ session().currentOracleIndex + 1 }} of {{ session().oracleReadings.length }}
+          </span>
+          <div class="oracle-progress-dots">
+            @for (r of session().oracleReadings; track $index) {
+              <span
+                class="progress-dot"
+                [class.current]="$index === session().currentOracleIndex"
+                [class.done]="$index < session().currentOracleIndex"
+              ></span>
+            }
+          </div>
+        </div>
+
+        <div class="cards-header">
+          <div class="cards-header-info">
+            <h2>
+              <span class="oracle-badge-icon">{{ systemIcons[oracle.system] }}</span>
+              {{ systemLabels[oracle.system] }}
+            </h2>
+            <p class="spread-label">{{ oracle.spreadType }}</p>
+          </div>
+          @if (hasDrawnCards()) {
+            <button class="btn-ghost" (click)="redraw()">↺ Redraw</button>
+          }
+        </div>
+
+        @if (!hasDrawnCards()) {
+          <div class="draw-section">
+            <p class="draw-hint">Draw your cards for {{ systemLabels[oracle.system] }}</p>
+            <button class="btn-draw" (click)="drawCards()">
+              <span class="btn-icon">✦</span> Draw Cards
+            </button>
+          </div>
+        } @else {
+          <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
+            @for (drawn of oracle.drawnCards; track $index) {
+              <div class="card-slot" [class.revealed]="drawn.revealed">
+                <p class="position-label">{{ drawn.positionLabel }}</p>
+
+                @if (drawn.revealed) {
+                  <div class="card-face">
+                    <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
+                    <h3 class="card-name">
+                      {{ drawn.card.name }}
+                      @if (drawn.isReversed) {
+                        <span class="reversed-badge">↓ Reversed</span>
+                      }
+                    </h3>
+                    <p class="card-meaning">{{ drawn.card.meaning }}</p>
+                    <div class="keywords">
+                      @for (kw of drawn.card.keywords; track kw) {
+                        <span class="keyword">{{ kw }}</span>
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <button class="card-back" (click)="revealCard($index)" aria-label="Reveal card">
+                    <span class="card-back-symbol">✦</span>
+                    <span class="reveal-text">Tap to reveal</span>
+                  </button>
+                }
               </div>
+            }
+          </div>
+
+          <div class="action-row">
+            @if (!canSubmitCurrentOracle()) {
+              <button class="btn-secondary" (click)="revealAll()">Reveal All</button>
+            } @else if (!isLastOracle()) {
+              <button class="btn-draw" (click)="nextOracle()">
+                <span class="btn-icon">✦</span> Next Oracle
+              </button>
             } @else {
-              <button class="card-back" (click)="revealCard($index)" aria-label="Reveal card">
-                <span class="card-back-symbol">✦</span>
-                <span class="reveal-text">Tap to reveal</span>
+              <button class="btn-draw" (click)="proceed()">
+                <span class="btn-icon">🌟</span> Get Your Reading
               </button>
             }
           </div>
         }
-      </div>
-
-      <div class="action-row">
-        @if (!canSubmit()) {
-          <button class="btn-secondary" (click)="revealAll()">Reveal All</button>
-        } @else {
-          <button class="btn-draw" (click)="proceed()">
-            <span class="btn-icon">🌟</span> Get Your Reading
-          </button>
-        }
-      </div>
-    </section>
+      </section>
+    }
   }
 </main>

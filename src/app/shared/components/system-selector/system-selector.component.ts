@@ -18,8 +18,10 @@ interface SystemOption {
   styleUrl: './system-selector.component.scss'
 })
 export class SystemSelectorComponent {
-  selected = input<DivinationSystem>('tarot');
-  selectedChange = output<DivinationSystem>();
+  /** For multi-select mode (default) */
+  selectedSystems = input<DivinationSystem[]>([]);
+  /** Emits toggle of a single system */
+  systemToggled = output<DivinationSystem>();
 
   readonly systems: SystemOption[] = [
     { key: 'tarot', label: 'Tarot', icon: '🌟', count: 78 },
@@ -35,7 +37,11 @@ export class SystemSelectorComponent {
     { key: 'oracle-generic', label: 'Oracle Generic', icon: '✨', count: 44, group: 'Oracle' },
   ];
 
-  select(key: DivinationSystem): void {
-    this.selectedChange.emit(key);
+  isSelected(key: DivinationSystem): boolean {
+    return this.selectedSystems().includes(key);
+  }
+
+  toggle(key: DivinationSystem): void {
+    this.systemToggled.emit(key);
   }
 }
