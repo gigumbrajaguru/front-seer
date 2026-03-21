@@ -2,8 +2,13 @@
 
 <main class="reading-page">
   <header class="page-header">
-    <h1 class="title">✦ Front Seer ✦</h1>
+    <h1 class="title">✦ Seer. ✦</h1>
     <p class="subtitle">Consult the Oracle</p>
+    @if (authService.currentUser()) {
+      <div class="header-user">
+        <app-user-badge />
+      </div>
+    }
   </header>
 
   <!-- Step indicator -->
@@ -44,25 +49,29 @@
   <!-- Step 2: Oracle Selection (multi-select) -->
   @if (session().step === 'oracle-selection') {
     <section class="setup-section">
-      <app-system-selector
-        [selectedSystems]="session().selectedOracles"
-        (systemToggled)="toggleOracle($event)"
-      />
-      <div class="draw-section">
-        @if (session().selectedOracles.length > 0) {
-          <p class="selection-count">
-            {{ session().selectedOracles.length }} oracle{{ session().selectedOracles.length > 1 ? 's' : '' }} selected
-          </p>
-        }
-        <button
-          class="btn-draw"
-          (click)="submitOracles()"
-          [disabled]="session().selectedOracles.length === 0"
-        >
-          <span class="btn-icon">✦</span>
-          Continue with {{ session().selectedOracles.length > 0 ? session().selectedOracles.length : '' }} Oracle{{ session().selectedOracles.length !== 1 ? 's' : '' }}
-        </button>
-      </div>
+      @if (!authService.currentUser()) {
+        <app-google-login />
+      } @else {
+        <app-system-selector
+          [selectedSystems]="session().selectedOracles"
+          (systemToggled)="toggleOracle($event)"
+        />
+        <div class="draw-section">
+          @if (session().selectedOracles.length > 0) {
+            <p class="selection-count">
+              {{ session().selectedOracles.length }} oracle{{ session().selectedOracles.length > 1 ? 's' : '' }} selected
+            </p>
+          }
+          <button
+            class="btn-draw"
+            (click)="submitOracles()"
+            [disabled]="session().selectedOracles.length === 0"
+          >
+            <span class="btn-icon">✦</span>
+            Continue with {{ session().selectedOracles.length > 0 ? session().selectedOracles.length : '' }} Oracle{{ session().selectedOracles.length !== 1 ? 's' : '' }}
+          </button>
+        </div>
+      }
     </section>
   }
 
