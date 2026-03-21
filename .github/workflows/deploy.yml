@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
       - claude/add-google-auth-users-4rn3A
 
 permissions:
