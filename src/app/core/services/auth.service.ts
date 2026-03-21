@@ -41,7 +41,7 @@ export class AuthService {
     localStorage.removeItem(this.USER_KEY);
   }
 
-  private decodeJwt(token: string): Record<string, string> {
+  private decodeJwt(token: string): { name: string; email: string; picture: string } {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
