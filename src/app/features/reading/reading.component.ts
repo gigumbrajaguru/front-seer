@@ -3,10 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
 import { DivinationService, ShuffledCard } from '../../core/services/divination.service';
+import { AuthService } from '../../core/services/auth.service';
 import { SystemSelectorComponent } from '../../shared/components/system-selector/system-selector.component';
 import { SpreadSelectorComponent } from '../../shared/components/spread-selector/spread-selector.component';
 import { QuestionPanelComponent } from '../../shared/components/question-panel/question-panel.component';
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
+import { GoogleLoginComponent } from '../../shared/components/google-login/google-login.component';
+import { UserBadgeComponent } from '../../shared/components/user-badge/user-badge.component';
 import { SpreadType } from '../../core/models/spread.model';
 import { DivinationSystem } from '../../core/models/card.model';
 
@@ -19,6 +22,8 @@ import { DivinationSystem } from '../../core/models/card.model';
     SpreadSelectorComponent,
     QuestionPanelComponent,
     StarFieldComponent,
+    GoogleLoginComponent,
+    UserBadgeComponent,
   ],
   templateUrl: './reading.component.html',
   styleUrl: './reading.component.scss',
@@ -27,6 +32,7 @@ export class ReadingComponent {
   private readonly readingService = inject(ReadingService);
   private readonly divinationService = inject(DivinationService);
   private readonly router = inject(Router);
+  readonly authService = inject(AuthService);
 
   readonly session = this.readingService.session;
   readonly currentOracle = this.readingService.currentOracle;
