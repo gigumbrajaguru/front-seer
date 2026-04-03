@@ -16,6 +16,7 @@ declare global {
   }
 }
 
+
 @Component({
   selector: 'app-google-login',
   standalone: true,
