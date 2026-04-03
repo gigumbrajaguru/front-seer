@@ -16,6 +16,7 @@ declare global {
   }
 }
 
+
 @Component({
   selector: 'app-google-login',
   standalone: true,
@@ -23,16 +24,7 @@ declare global {
   template: `
     <div class="inline-login-card">
       <p class="login-title">Sign in to continue</p>
-      <p class="login-subtitle">Continue with Google or use your email below.</p>
-
-      <div class="oauth-section">
-        <div #googleBtn class="google-btn-container"></div>
-        @if (googleUnavailable()) {
-          <p class="oauth-note">Google login is unavailable right now, use manual sign-in.</p>
-        }
-      </div>
-
-      <div class="divider"><span>or</span></div>
+      <p class="login-subtitle">Use a quick in-page login instead of a popup.</p>
 
       <form [formGroup]="loginForm" (ngSubmit)="submit()" class="login-form" novalidate>
         <label class="field-label" for="name">Name</label>
@@ -45,7 +37,7 @@ declare global {
           <p class="error-text">Please enter a valid name and email address.</p>
         }
 
-        <button type="submit" class="login-btn">Continue with Email</button>
+        <button type="submit" class="login-btn">Continue</button>
       </form>
     </div>
   `,
@@ -76,43 +68,6 @@ declare global {
       text-align: center;
       color: #b9aec2;
       font-size: 0.86rem;
-    }
-
-    .oauth-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.4rem;
-      padding-top: 0.2rem;
-    }
-
-    .google-btn-container {
-      min-height: 40px;
-    }
-
-    .oauth-note {
-      margin: 0;
-      color: #b9aec2;
-      font-size: 0.78rem;
-      text-align: center;
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #9f8fb2;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.7rem;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(212, 175, 106, 0.15);
     }
 
     .login-form {
@@ -162,40 +117,29 @@ declare global {
     }
   `],
 })
-export class GoogleLoginComponent implements AfterViewInit {
-  @ViewChild('googleBtn') googleBtn!: ElementRef<HTMLElement>;
-
+export class GoogleLoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
 
   readonly showError = signal(false);
-  readonly googleUnavailable = signal(false);
 
   readonly loginForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
   });
 
-  ngAfterViewInit(): void {
-    if (!window.google || !environment.googleClientId) {
-      this.googleUnavailable.set(true);
+  submit(): void {
+    if (this.loginForm.invalid) {
+      this.showError.set(true);
+      this.loginForm.markAllAsTouched();
       return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: environment.googleClientId,
-      callback: (response: { credential: string }) => {
-        this.authService.setUserFromCredential(response.credential);
-      },
-    });
+    const name = this.loginForm.controls.name.value ?? '';
+    const email = this.loginForm.controls.email.value ?? '';
 
-    window.google.accounts.id.renderButton(this.googleBtn.nativeElement, {
-      theme: 'filled_black',
-      size: 'large',
-      shape: 'pill',
-      text: 'signin_with',
-      width: 320,
-    });
+    this.authService.setManualUser(name, email);
+    this.showError.set(false);
   }
 
   submit(): void {
