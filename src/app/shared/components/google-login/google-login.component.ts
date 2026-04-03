@@ -1,6 +1,21 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: object) => void;
+          renderButton: (element: HTMLElement, config: object) => void;
+        };
+      };
+    };
+  }
+}
+
 
 @Component({
   selector: 'app-google-login',
@@ -112,6 +127,20 @@ export class GoogleLoginComponent {
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
   });
+
+  submit(): void {
+    if (this.loginForm.invalid) {
+      this.showError.set(true);
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+
+    const name = this.loginForm.controls.name.value ?? '';
+    const email = this.loginForm.controls.email.value ?? '';
+
+    this.authService.setManualUser(name, email);
+    this.showError.set(false);
+  }
 
   submit(): void {
     if (this.loginForm.invalid) {
