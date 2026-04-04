@@ -110,7 +110,7 @@
     <section class="cards-section aurora-panel">
       <h2 class="section-heading">Draw Cards for All Oracles</h2>
 
-      @for (oracle of session().oracleReadings; track $index) {
+      @for (oracle of session().oracleReadings; track $index; let oracleIndex = $index) {
         <div class="oracle-drawing-block">
           <div class="cards-header">
             <div class="cards-header-info">
@@ -120,34 +120,34 @@
               </h2>
               <p class="spread-label">{{ oracle.spreadType }}</p>
             </div>
-            @if (!hasConfirmedCards($index)) {
-              <button class="btn-ghost" (click)="reshuffleDeck($index)">↺ Reshuffle</button>
+            @if (!hasConfirmedCards(oracleIndex)) {
+              <button class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">↺ Reshuffle</button>
             } @else {
-              <button class="btn-ghost" (click)="redrawOracle($index)">↺ Redraw</button>
+              <button class="btn-ghost" (click)="redrawOracle(oracleIndex)">↺ Redraw</button>
             }
           </div>
 
-          @if (!hasConfirmedCards($index)) {
+          @if (!hasConfirmedCards(oracleIndex)) {
             <div class="selection-header">
               <p class="selection-instruction">
-                Choose <strong>{{ requiredCountFor($index) }}</strong> card{{ requiredCountFor($index) !== 1 ? 's' : '' }} from the shuffled deck
+                Choose <strong>{{ requiredCountFor(oracleIndex) }}</strong> card{{ requiredCountFor(oracleIndex) !== 1 ? 's' : '' }} from the shuffled deck
               </p>
-              <span class="selection-progress" [class.complete]="selectionComplete($index)">
-                {{ selectedIndices($index).length }} / {{ requiredCountFor($index) }} selected
+              <span class="selection-progress" [class.complete]="selectionComplete(oracleIndex)">
+                {{ selectedIndices(oracleIndex).length }} / {{ requiredCountFor(oracleIndex) }} selected
               </span>
             </div>
 
             <div class="deck-grid">
-              @for (item of shuffledDeck($index); track $index; let cardIndex = $index) {
+              @for (item of shuffledDeck(oracleIndex); track $index; let cardIndex = $index) {
                 <button
                   class="deck-card"
-                  [class.selected]="isCardSelected($index, cardIndex)"
-                  [class.disabled]="!isCardSelected($index, cardIndex) && selectionComplete($index)"
-                  (click)="toggleCardSelection($index, cardIndex)"
-                  [disabled]="!isCardSelected($index, cardIndex) && selectionComplete($index)"
+                  [class.selected]="isCardSelected(oracleIndex, cardIndex)"
+                  [class.disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
+                  (click)="toggleCardSelection(oracleIndex, cardIndex)"
+                  [disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
                 >
-                  @if (isCardSelected($index, cardIndex)) {
-                    <span class="deck-card-order">{{ selectionOrder($index, cardIndex) }}</span>
+                  @if (isCardSelected(oracleIndex, cardIndex)) {
+                    <span class="deck-card-order">{{ selectionOrder(oracleIndex, cardIndex) }}</span>
                   } @else {
                     <span class="deck-card-back-symbol">✦</span>
                   }
@@ -158,15 +158,15 @@
             <div class="action-row">
               <button
                 class="btn-draw"
-                (click)="confirmSelection($index)"
-                [disabled]="!selectionComplete($index)"
+                (click)="confirmSelection(oracleIndex)"
+                [disabled]="!selectionComplete(oracleIndex)"
               >
                 <span class="btn-icon">✦</span> Confirm {{ systemLabels[oracle.system] }}
               </button>
             </div>
           }
 
-          @if (hasConfirmedCards($index)) {
+          @if (hasConfirmedCards(oracleIndex)) {
             <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
               @for (drawn of oracle.drawnCards; track $index) {
                 <div class="card-slot revealed">
