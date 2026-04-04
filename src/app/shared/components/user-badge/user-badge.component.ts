@@ -30,6 +30,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       align-items: center;
       gap: 0.6rem;
+      max-width: min(280px, 45vw);
       padding: 0.4rem 0.75rem 0.4rem 0.4rem;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(212, 175, 106, 0.25);
@@ -48,6 +49,8 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       flex-direction: column;
       line-height: 1.2;
+      min-width: 0;
+      flex: 1;
     }
 
     .user-name {
@@ -55,11 +58,17 @@ import { AuthService } from '../../../core/services/auth.service';
       color: #d4af6a;
       font-weight: 600;
       letter-spacing: 0.04em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .user-email {
       font-size: 0.68rem;
       color: #9b8ea0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .logout-btn {
