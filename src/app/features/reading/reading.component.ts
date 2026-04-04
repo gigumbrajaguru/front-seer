@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
@@ -79,20 +79,31 @@ export class ReadingComponent {
       const readings = this.session().oracleReadings;
       if (step !== 'drawing') return;
 
-      const currentDecks = { ...this.shuffledDecks() };
-      const currentSelections = { ...this.selectedIndicesByOracle() };
+      const existingDecks = untracked(() => this.shuffledDecks());
+      const existingSelections = untracked(() => this.selectedIndicesByOracle());
+
+      const nextDecks = { ...existingDecks };
+      const nextSelections = { ...existingSelections };
+      let decksChanged = false;
+      let selectionsChanged = false;
 
       readings.forEach((oracle, index) => {
-        if (!currentDecks[index] || currentDecks[index].length === 0) {
-          currentDecks[index] = this.divinationService.getShuffledDeck(oracle.system);
+        if (!nextDecks[index] || nextDecks[index].length === 0) {
+          nextDecks[index] = this.divinationService.getShuffledDeck(oracle.system);
+          decksChanged = true;
         }
-        if (!currentSelections[index]) {
-          currentSelections[index] = [];
+        if (!nextSelections[index]) {
+          nextSelections[index] = [];
+          selectionsChanged = true;
         }
       });
 
-      this.shuffledDecks.set(currentDecks);
-      this.selectedIndicesByOracle.set(currentSelections);
+      if (decksChanged) {
+        this.shuffledDecks.set(nextDecks);
+      }
+      if (selectionsChanged) {
+        this.selectedIndicesByOracle.set(nextSelections);
+      }
     });
   }
 
