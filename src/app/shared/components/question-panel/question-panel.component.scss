@@ -17,11 +17,17 @@
   }
 }
 
-.optional-tag {
+.required-tag {
   font-size: 0.65rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.upload-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
   color: var(--text-dim);
-  opacity: 0.6;
-  font-style: italic;
 }
 
 .question-input {
