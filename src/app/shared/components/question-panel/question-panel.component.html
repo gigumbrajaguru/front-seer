@@ -1,17 +1,19 @@
 <div class="question-panel">
   <div class="panel-header">
     <h3>Your Question</h3>
-    <span class="optional-tag">optional</span>
+    <span class="required-tag">required</span>
   </div>
 
   <textarea
     class="question-input"
-    placeholder="What guidance do you seek? Enter your question here, or let the cards speak freely..."
+    placeholder="What guidance do you seek? Enter your question to begin your reading..."
     [(ngModel)]="question"
     (ngModelChange)="onQuestionChange()"
     rows="3"
     maxlength="1000"
   ></textarea>
+
+  <p class="upload-hint">Optional: upload a .txt file for additional context.</p>
 
   <div class="upload-zone"
     [class.drag-over]="isDragOver"
