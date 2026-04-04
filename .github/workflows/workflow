@@ -15,8 +15,9 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-      - run: npm run build -- --configuration production --base-href "/front-seer/"
+      - run: npm run build -- --configuration production --base-href "/"
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/front-seer/browser
+          cname: myseer.xyz

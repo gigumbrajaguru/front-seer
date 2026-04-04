@@ -1,9 +1,14 @@
 <app-star-field />
 
 <main class="reading-page">
-  <header class="page-header">
-    <h1 class="title">✦ Seer. ✦</h1>
-    <p class="subtitle">Consult the Oracle</p>
+  <header class="page-header aurora-panel">
+    <div class="header-copy">
+      <p class="eyebrow">Mystical guidance</p>
+      <h1 class="title">✦ Seer. ✦</h1>
+      <p class="subtitle">Consult the Oracle</p>
+      <p class="site-note">A modern mystical guidance space for multi-oracle readings, reflection, and clarity.</p>
+    </div>
+
     @if (authService.currentUser()) {
       <div class="header-user">
         <app-user-badge />
@@ -11,8 +16,7 @@
     }
   </header>
 
-  <!-- Step indicator -->
-  <div class="step-indicator">
+  <div class="step-indicator aurora-panel">
     <div class="step" [class.active]="session().step === 'question'" [class.done]="session().step !== 'question'">
       <span class="step-num">1</span>
       <span class="step-name">Question</span>
@@ -34,9 +38,8 @@
     </div>
   </div>
 
-  <!-- Step 1: Question -->
   @if (session().step === 'question') {
-    <section class="setup-section">
+    <section class="setup-section aurora-panel">
       <app-question-panel />
       <div class="draw-section">
         <button class="btn-draw" (click)="submitQuestion()" [disabled]="!session().question.trim()">
@@ -46,11 +49,12 @@
     </section>
   }
 
-  <!-- Step 2: Oracle Selection (multi-select) -->
   @if (session().step === 'oracle-selection') {
-    <section class="setup-section">
+    <section class="setup-section aurora-panel">
       @if (!authService.currentUser()) {
-        <app-google-login />
+        <div class="auth-center">
+          <app-google-login />
+        </div>
       } @else {
         <app-system-selector
           [selectedSystems]="session().selectedOracles"
@@ -75,23 +79,24 @@
     </section>
   }
 
-  <!-- Step 3: Spread Selection (one per oracle) -->
   @if (session().step === 'spread-selection') {
-    <section class="setup-section">
+    <section class="setup-section aurora-panel">
       <h2 class="section-heading">Choose a Spread for Each Oracle</h2>
 
-      @for (reading of session().oracleReadings; track $index) {
-        <div class="oracle-spread-block">
-          <div class="oracle-spread-header">
-            <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
-            <span class="oracle-name">{{ systemLabels[reading.system] }}</span>
+      <div class="spread-grid">
+        @for (reading of session().oracleReadings; track $index) {
+          <div class="oracle-spread-block">
+            <div class="oracle-spread-header">
+              <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
+              <span class="oracle-name">{{ systemLabels[reading.system] }}</span>
+            </div>
+            <app-spread-selector
+              [selected]="reading.spreadType"
+              (selectedChange)="onSpreadChange($index, $event)"
+            />
           </div>
-          <app-spread-selector
-            [selected]="reading.spreadType"
-            (selectedChange)="onSpreadChange($index, $event)"
-          />
-        </div>
-      }
+        }
+      </div>
 
       <div class="draw-section">
         <button class="btn-draw" (click)="submitSpreads()">
@@ -101,123 +106,98 @@
     </section>
   }
 
-  <!-- Step 4: Drawing — card selection from shuffled deck -->
   @if (session().step === 'drawing') {
-    @if (currentOracle(); as oracle) {
-      <section class="cards-section">
+    <section class="cards-section aurora-panel">
+      <h2 class="section-heading">Draw Cards for All Oracles</h2>
 
-        <!-- Oracle progress -->
-        <div class="oracle-progress">
-          <span class="oracle-progress-label">
-            Oracle {{ session().currentOracleIndex + 1 }} of {{ session().oracleReadings.length }}
-          </span>
-          <div class="oracle-progress-dots">
-            @for (r of session().oracleReadings; track $index) {
-              <span
-                class="progress-dot"
-                [class.current]="$index === session().currentOracleIndex"
-                [class.done]="$index < session().currentOracleIndex"
-              ></span>
+      @for (oracle of session().oracleReadings; track $index) {
+        <div class="oracle-drawing-block">
+          <div class="cards-header">
+            <div class="cards-header-info">
+              <h2>
+                <span class="oracle-badge-icon">{{ systemIcons[oracle.system] }}</span>
+                {{ systemLabels[oracle.system] }}
+              </h2>
+              <p class="spread-label">{{ oracle.spreadType }}</p>
+            </div>
+            @if (!hasConfirmedCards($index)) {
+              <button class="btn-ghost" (click)="reshuffleDeck($index)">↺ Reshuffle</button>
+            } @else {
+              <button class="btn-ghost" (click)="redrawOracle($index)">↺ Redraw</button>
             }
           </div>
-        </div>
 
-        <!-- Oracle + spread header -->
-        <div class="cards-header">
-          <div class="cards-header-info">
-            <h2>
-              <span class="oracle-badge-icon">{{ systemIcons[oracle.system] }}</span>
-              {{ systemLabels[oracle.system] }}
-            </h2>
-            <p class="spread-label">{{ oracle.spreadType }}</p>
-          </div>
-          @if (!hasConfirmedCards()) {
-            <button class="btn-ghost" (click)="reshuffleDeck()">↺ Reshuffle</button>
-          } @else {
-            <button class="btn-ghost" (click)="redrawCurrentOracle()">↺ Redraw</button>
-          }
-        </div>
+          @if (!hasConfirmedCards($index)) {
+            <div class="selection-header">
+              <p class="selection-instruction">
+                Choose <strong>{{ requiredCountFor($index) }}</strong> card{{ requiredCountFor($index) !== 1 ? 's' : '' }} from the shuffled deck
+              </p>
+              <span class="selection-progress" [class.complete]="selectionComplete($index)">
+                {{ selectedIndices($index).length }} / {{ requiredCountFor($index) }} selected
+              </span>
+            </div>
 
-        <!-- Phase A: Card selection from shuffled deck -->
-        @if (!hasConfirmedCards()) {
-          <div class="selection-header">
-            <p class="selection-instruction">
-              Choose <strong>{{ requiredCount() }}</strong> card{{ requiredCount() !== 1 ? 's' : '' }} from the shuffled deck
-            </p>
-            <span class="selection-progress" [class.complete]="selectionComplete()">
-              {{ selectedIndices().length }} / {{ requiredCount() }} selected
-            </span>
-          </div>
+            <div class="deck-grid">
+              @for (item of shuffledDeck($index); track $index; let cardIndex = $index) {
+                <button
+                  class="deck-card"
+                  [class.selected]="isCardSelected($index, cardIndex)"
+                  [class.disabled]="!isCardSelected($index, cardIndex) && selectionComplete($index)"
+                  (click)="toggleCardSelection($index, cardIndex)"
+                  [disabled]="!isCardSelected($index, cardIndex) && selectionComplete($index)"
+                >
+                  @if (isCardSelected($index, cardIndex)) {
+                    <span class="deck-card-order">{{ selectionOrder($index, cardIndex) }}</span>
+                  } @else {
+                    <span class="deck-card-back-symbol">✦</span>
+                  }
+                </button>
+              }
+            </div>
 
-          <div class="deck-grid">
-            @for (item of shuffledDeck(); track $index) {
+            <div class="action-row">
               <button
-                class="deck-card"
-                [class.selected]="isCardSelected($index)"
-                [class.disabled]="!isCardSelected($index) && selectionComplete()"
-                (click)="toggleCardSelection($index)"
-                [attr.aria-label]="isCardSelected($index) ? 'Deselect card ' + selectionOrder($index) : 'Select card'"
-                [disabled]="!isCardSelected($index) && selectionComplete()"
+                class="btn-draw"
+                (click)="confirmSelection($index)"
+                [disabled]="!selectionComplete($index)"
               >
-                @if (isCardSelected($index)) {
-                  <span class="deck-card-order">{{ selectionOrder($index) }}</span>
-                } @else {
-                  <span class="deck-card-back-symbol">✦</span>
-                }
+                <span class="btn-icon">✦</span> Confirm {{ systemLabels[oracle.system] }}
               </button>
-            }
-          </div>
+            </div>
+          }
 
-          <div class="action-row">
-            <button
-              class="btn-draw"
-              (click)="confirmSelection()"
-              [disabled]="!selectionComplete()"
-            >
-              <span class="btn-icon">✦</span> Confirm Selection
-            </button>
-          </div>
-        }
-
-        <!-- Phase B: Show confirmed cards in spread positions -->
-        @if (hasConfirmedCards()) {
-          <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
-            @for (drawn of oracle.drawnCards; track $index) {
-              <div class="card-slot revealed">
-                <p class="position-label">{{ drawn.positionLabel }}</p>
-                <div class="card-face">
-                  <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
-                  <h3 class="card-name">
-                    {{ drawn.card.name }}
-                    @if (drawn.isReversed) {
-                      <span class="reversed-badge">↓ Reversed</span>
-                    }
-                  </h3>
-                  <p class="card-meaning">{{ drawn.card.meaning }}</p>
-                  <div class="keywords">
-                    @for (kw of drawn.card.keywords; track kw) {
-                      <span class="keyword">{{ kw }}</span>
-                    }
+          @if (hasConfirmedCards($index)) {
+            <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
+              @for (drawn of oracle.drawnCards; track $index) {
+                <div class="card-slot revealed">
+                  <p class="position-label">{{ drawn.positionLabel }}</p>
+                  <div class="card-face">
+                    <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
+                    <h3 class="card-name">
+                      {{ drawn.card.name }}
+                      @if (drawn.isReversed) {
+                        <span class="reversed-badge">↓ Reversed</span>
+                      }
+                    </h3>
+                    <p class="card-meaning">{{ drawn.card.meaning }}</p>
+                    <div class="keywords">
+                      @for (kw of drawn.card.keywords; track kw) {
+                        <span class="keyword">{{ kw }}</span>
+                      }
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
+        </div>
+      }
 
-          <div class="action-row">
-            @if (!isLastOracle()) {
-              <button class="btn-draw" (click)="nextOracle()">
-                <span class="btn-icon">✦</span> Next Oracle
-              </button>
-            } @else {
-              <button class="btn-draw" (click)="proceed()">
-                <span class="btn-icon">🌟</span> Get Your Reading
-              </button>
-            }
-          </div>
-        }
-
-      </section>
-    }
+      <div class="action-row">
+        <button class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
+          <span class="btn-icon">🌟</span> Get Your Reading
+        </button>
+      </div>
+    </section>
   }
 </main>
