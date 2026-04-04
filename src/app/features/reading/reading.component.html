@@ -51,7 +51,9 @@
   @if (session().step === 'oracle-selection') {
     <section class="setup-section aurora-panel">
       @if (!authService.currentUser()) {
-        <app-google-login />
+        <div class="auth-center">
+          <app-google-login />
+        </div>
       } @else {
         <app-system-selector
           [selectedSystems]="session().selectedOracles"

@@ -169,6 +169,15 @@
   gap: 0.75rem;
 }
 
+
+.auth-center {
+  width: 100%;
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .selection-count {
   font-size: 0.82rem;
   color: #d4af6a;
