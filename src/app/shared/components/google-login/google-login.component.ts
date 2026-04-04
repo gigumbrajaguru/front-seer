@@ -51,7 +51,7 @@ declare global {
   `,
   styles: [`
     .inline-login-card {
-      max-width: 460px;
+      width: min(100%, 460px);
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -79,6 +79,7 @@ declare global {
     }
 
     .oauth-section {
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -87,7 +88,15 @@ declare global {
     }
 
     .google-btn-container {
+      width: 100%;
       min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #9f8fb2;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.7rem;
     }
 
     .oauth-note {
@@ -116,6 +125,7 @@ declare global {
     }
 
     .login-form {
+      width: 100%;
       display: grid;
       gap: 0.55rem;
     }
