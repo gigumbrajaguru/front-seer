@@ -42,7 +42,7 @@
     <section class="setup-section aurora-panel">
       <app-question-panel />
       <div class="draw-section">
-        <button class="btn-draw" (click)="submitQuestion()" [disabled]="!session().question.trim()">
+        <button type="button" class="btn-draw" (click)="submitQuestion()" [disabled]="!session().question.trim()">
           <span class="btn-icon">✦</span> Ask the Oracle
         </button>
       </div>
@@ -99,7 +99,7 @@
       </div>
 
       <div class="draw-section">
-        <button class="btn-draw" (click)="submitSpreads()">
+        <button type="button" class="btn-draw" (click)="submitSpreads()">
           <span class="btn-icon">✦</span> Begin Reading
         </button>
       </div>
@@ -121,9 +121,9 @@
               <p class="spread-label">{{ oracle.spreadType }}</p>
             </div>
             @if (!hasConfirmedCards(oracleIndex)) {
-              <button class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">↺ Reshuffle</button>
+              <button type="button" class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">↺ Reshuffle</button>
             } @else {
-              <button class="btn-ghost" (click)="redrawOracle(oracleIndex)">↺ Redraw</button>
+              <button type="button" class="btn-ghost" (click)="redrawOracle(oracleIndex)">↺ Redraw</button>
             }
           </div>
 
@@ -194,7 +194,7 @@
       }
 
       <div class="action-row">
-        <button class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
+        <button type="button" class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
           <span class="btn-icon">🌟</span> Get Your Reading
         </button>
       </div>
