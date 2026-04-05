@@ -1,8 +1,11 @@
 import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 
+type SocialProvider = 'facebook' | 'tiktok' | 'discord';
+
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 declare global {
   interface Window {
     google?: {
@@ -22,31 +25,31 @@ declare global {
   imports: [ReactiveFormsModule],
   template: `
     <div class="inline-login-card">
-      <p class="login-title">Sign in to continue</p>
-      <p class="login-subtitle">Continue with Google or use your email below.</p>
+      <p class="login-title">Sign in</p>
+      <p class="login-subtitle">Choose your account provider.</p>
 
       <div class="oauth-section">
         <div #googleBtn class="google-btn-container"></div>
         @if (googleUnavailable()) {
-          <p class="oauth-note">Google login is unavailable right now (client ID missing/invalid). Use manual sign-in.</p>
+          <p class="oauth-note">Google login is currently unavailable. Please verify your client ID configuration.</p>
         }
       </div>
 
-      <div class="divider"><span>or</span></div>
+      <div class="social-buttons">
+        <button type="button" class="social-btn facebook" (click)="startSocialLogin('facebook')" [disabled]="!hasFacebook()">
+          Continue with Facebook
+        </button>
+        <button type="button" class="social-btn tiktok" (click)="startSocialLogin('tiktok')" [disabled]="!hasTikTok()">
+          Continue with TikTok
+        </button>
+        <button type="button" class="social-btn discord" (click)="startSocialLogin('discord')" [disabled]="!hasDiscord()">
+          Continue with Discord
+        </button>
+      </div>
 
-      <form [formGroup]="loginForm" (ngSubmit)="submitManualLogin()" class="login-form" novalidate>
-        <label class="field-label" for="name">Name</label>
-        <input id="name" type="text" formControlName="name" placeholder="Your name" class="field-input" />
-
-        <label class="field-label" for="email">Email</label>
-        <input id="email" type="email" formControlName="email" placeholder="you@example.com" class="field-input" />
-
-        @if (showError()) {
-          <p class="error-text">Please enter a valid name and email address.</p>
-        }
-
-        <button type="submit" class="login-btn">Continue with Email</button>
-      </form>
+      @if (!hasFacebook() || !hasTikTok() || !hasDiscord()) {
+        <p class="oauth-note">Configure provider client IDs in environment files to enable all social logins.</p>
+      }
     </div>
   `,
   styles: [`
@@ -83,7 +86,7 @@ declare global {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
       padding-top: 0.2rem;
     }
 
@@ -99,76 +102,36 @@ declare global {
       font-size: 0.7rem;
     }
 
+    .social-buttons {
+      display: grid;
+      gap: 0.5rem;
+      margin-top: 0.2rem;
+    }
+
+    .social-btn {
+      border: 1px solid rgba(212, 175, 106, 0.26);
+      border-radius: 0.6rem;
+      background: rgba(255, 255, 255, 0.03);
+      color: #e8e0d0;
+      font-size: 0.88rem;
+      padding: 0.55rem 0.7rem;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+    }
+
+    .facebook:not(:disabled):hover { border-color: #3b5998; }
+    .tiktok:not(:disabled):hover { border-color: #24f4ee; }
+    .discord:not(:disabled):hover { border-color: #5865f2; }
+
     .oauth-note {
       margin: 0;
       color: #b9aec2;
       font-size: 0.78rem;
       text-align: center;
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #9f8fb2;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.7rem;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(212, 175, 106, 0.15);
-    }
-
-    .login-form {
-      width: 100%;
-      display: grid;
-      gap: 0.55rem;
-    }
-
-    .field-label {
-      font-size: 0.78rem;
-      color: #b9aec2;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .field-input {
-      width: 100%;
-      border: 1px solid rgba(212, 175, 106, 0.24);
-      border-radius: 0.55rem;
-      background: rgba(11, 11, 20, 0.85);
-      color: #e8e0d0;
-      padding: 0.6rem 0.7rem;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .field-input:focus {
-      border-color: rgba(212, 175, 106, 0.65);
-      box-shadow: 0 0 0 2px rgba(212, 175, 106, 0.15);
-    }
-
-    .login-btn {
-      margin-top: 0.4rem;
-      border: none;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #6b3fa0, #9b2c8a);
-      color: #fff;
-      padding: 0.7rem 1rem;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-      font-size: 0.95rem;
-    }
-
-    .error-text {
-      margin: 0.15rem 0 0;
-      color: #e78ea6;
-      font-size: 0.8rem;
     }
   `],
 })
@@ -177,6 +140,26 @@ export class GoogleLoginComponent implements AfterViewInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  readonly googleUnavailable = signal(false);
+
+  private hasValidGoogleClientId(): boolean {
+    const clientId = environment.googleClientId?.trim() ?? '';
+    if (!clientId) return false;
+    if (clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return false;
+    return clientId.endsWith('.apps.googleusercontent.com');
+  }
+
+  hasFacebook(): boolean {
+    return !!environment.facebookClientId;
+  }
+
+  hasTikTok(): boolean {
+    return !!environment.tiktokClientKey;
+  }
+
+  hasDiscord(): boolean {
+    return !!environment.discordClientId;
+  }
 
   readonly showError = signal(false);
   readonly googleUnavailable = signal(false);
@@ -216,17 +199,28 @@ export class GoogleLoginComponent implements AfterViewInit {
     });
   }
 
-  submitManualLogin(): void {
-    if (this.loginForm.invalid) {
-      this.showError.set(true);
-      this.loginForm.markAllAsTouched();
-      return;
+  startSocialLogin(provider: SocialProvider): void {
+    const redirectUri = `${window.location.origin}/`;
+    let url = '';
+
+    if (provider === 'facebook' && environment.facebookClientId) {
+      const scope = encodeURIComponent('email,public_profile');
+      url = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${encodeURIComponent(environment.facebookClientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
     }
 
-    const name = this.loginForm.controls.name.value ?? '';
-    const email = this.loginForm.controls.email.value ?? '';
+    if (provider === 'tiktok' && environment.tiktokClientKey) {
+      const scope = encodeURIComponent('user.info.basic');
+      const state = encodeURIComponent('seer_auth');
+      url = `https://www.tiktok.com/v2/auth/authorize/?client_key=${encodeURIComponent(environment.tiktokClientKey)}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    }
 
-    this.authService.setManualUser(name, email);
-    this.showError.set(false);
+    if (provider === 'discord' && environment.discordClientId) {
+      const scope = encodeURIComponent('identify email');
+      url = `https://discord.com/oauth2/authorize?client_id=${encodeURIComponent(environment.discordClientId)}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}`;
+    }
+
+    if (url) {
+      window.location.assign(url);
+    }
   }
 }
