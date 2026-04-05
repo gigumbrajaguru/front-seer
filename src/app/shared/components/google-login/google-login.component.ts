@@ -153,19 +153,20 @@ export class GoogleLoginComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (!window.google || !this.hasValidGoogleClientId()) {
+    const googleClient = window.google;
+    if (!googleClient || !this.hasValidGoogleClientId()) {
       this.googleUnavailable.set(true);
       return;
     }
 
-    window.google.accounts.id.initialize({
+    googleClient.accounts.id.initialize({
       client_id: environment.googleClientId,
       callback: (response: { credential: string }) => {
         this.authService.setUserFromCredential(response.credential);
       },
     });
 
-    google.accounts.id.renderButton(this.googleBtn.nativeElement, {
+    googleClient.accounts.id.renderButton(this.googleBtn.nativeElement, {
       theme: 'filled_black',
       size: 'large',
       shape: 'pill',
