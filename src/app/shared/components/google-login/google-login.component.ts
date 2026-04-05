@@ -165,7 +165,7 @@ export class GoogleLoginComponent implements AfterViewInit {
       },
     });
 
-    window.google.accounts.id.renderButton(this.googleBtn.nativeElement, {
+    google.accounts.id.renderButton(this.googleBtn.nativeElement, {
       theme: 'filled_black',
       size: 'large',
       shape: 'pill',
