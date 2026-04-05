@@ -102,6 +102,17 @@ export class ReadingService {
     });
   }
 
+  setDrawnCardsForOracle(index: number, cards: DrawnCard[]): void {
+    this._session.update(s => {
+      const oracleReadings = [...s.oracleReadings];
+      oracleReadings[index] = {
+        ...oracleReadings[index],
+        drawnCards: cards
+      };
+      return { ...s, oracleReadings };
+    });
+  }
+
   revealCard(index: number): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -135,6 +146,17 @@ export class ReadingService {
       const oracleReadings = [...s.oracleReadings];
       oracleReadings[s.currentOracleIndex] = {
         ...oracleReadings[s.currentOracleIndex],
+        drawnCards: []
+      };
+      return { ...s, oracleReadings };
+    });
+  }
+
+  resetOracle(index: number): void {
+    this._session.update(s => {
+      const oracleReadings = [...s.oracleReadings];
+      oracleReadings[index] = {
+        ...oracleReadings[index],
         drawnCards: []
       };
       return { ...s, oracleReadings };

@@ -30,15 +30,31 @@ export class AuthService {
       email: payload.email,
       picture: payload.picture,
     };
-    this.ngZone.run(() => {
-      this.currentUser.set(user);
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    this.persistUser(user);
+  }
+
+  setManualUser(name: string, email: string): void {
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const avatarSeed = encodeURIComponent(normalizedName || normalizedEmail || 'Seer');
+
+    this.persistUser({
+      name: normalizedName,
+      email: normalizedEmail,
+      picture: `https://ui-avatars.com/api/?name=${avatarSeed}&background=1e1b38&color=d4af6a`,
     });
   }
 
   logout(): void {
     this.currentUser.set(null);
     localStorage.removeItem(this.USER_KEY);
+  }
+
+  private persistUser(user: GoogleUser): void {
+    this.ngZone.run(() => {
+      this.currentUser.set(user);
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    });
   }
 
   private decodeJwt(token: string): { name: string; email: string; picture: string } {
