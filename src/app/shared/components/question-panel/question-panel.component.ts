@@ -55,10 +55,6 @@ export class QuestionPanelComponent {
       const content = await this.fileUploadService.readTextFile(file);
       this.fileName = file.name;
       this.readingService.setFileContent(content);
-      if (!this.question && content.length > 0) {
-        this.question = content.slice(0, 500);
-        this.readingService.setQuestion(this.question);
-      }
     } catch (err: any) {
       this.fileError = err.message ?? 'Failed to read file';
     }

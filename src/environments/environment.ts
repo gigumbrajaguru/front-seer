@@ -1,5 +1,8 @@
 export const environment = {
   production: false,
   apiBaseUrl: 'http://localhost:3000',
-  googleClientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
+  googleClientId: '574601845872-69q3ag715can9feav6liuoh7uhllhnn3.apps.googleusercontent.com',
+  facebookClientId: '',
+  tiktokClientKey: '',
+  discordClientId: ''
 };
