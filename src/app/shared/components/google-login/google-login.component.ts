@@ -28,7 +28,7 @@ declare global {
       <div class="oauth-section">
         <div #googleBtn class="google-btn-container"></div>
         @if (googleUnavailable()) {
-          <p class="oauth-note">Google login is unavailable right now, use manual sign-in.</p>
+          <p class="oauth-note">Google login is unavailable right now (client ID missing/invalid). Use manual sign-in.</p>
         }
       </div>
 
@@ -186,8 +186,16 @@ export class GoogleLoginComponent implements AfterViewInit {
     email: ['', [Validators.required, Validators.email]],
   });
 
+
+  private hasValidGoogleClientId(): boolean {
+    const clientId = environment.googleClientId?.trim() ?? '';
+    if (!clientId) return false;
+    if (clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return false;
+    return clientId.endsWith('.apps.googleusercontent.com');
+  }
+
   ngAfterViewInit(): void {
-    if (!window.google || !environment.googleClientId) {
+    if (!window.google || !this.hasValidGoogleClientId()) {
       this.googleUnavailable.set(true);
       return;
     }
