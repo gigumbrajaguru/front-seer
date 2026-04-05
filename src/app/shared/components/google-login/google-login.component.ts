@@ -1,11 +1,9 @@
 import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
-
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 type SocialProvider = 'facebook' | 'tiktok' | 'discord';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 declare global {
   interface Window {
     google?: {
@@ -22,7 +20,6 @@ declare global {
 @Component({
   selector: 'app-google-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
   template: `
     <div class="inline-login-card">
       <p class="login-title">Sign in</p>
@@ -94,12 +91,7 @@ declare global {
       width: 100%;
       min-height: 40px;
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #9f8fb2;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.7rem;
+      justify-content: center;
     }
 
     .social-buttons {
@@ -138,7 +130,6 @@ declare global {
 export class GoogleLoginComponent implements AfterViewInit {
   @ViewChild('googleBtn') googleBtn!: ElementRef<HTMLElement>;
 
-  private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   readonly googleUnavailable = signal(false);
 
@@ -161,22 +152,6 @@ export class GoogleLoginComponent implements AfterViewInit {
     return !!environment.discordClientId;
   }
 
-  readonly showError = signal(false);
-  readonly googleUnavailable = signal(false);
-
-  readonly loginForm = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]],
-  });
-
-
-  private hasValidGoogleClientId(): boolean {
-    const clientId = environment.googleClientId?.trim() ?? '';
-    if (!clientId) return false;
-    if (clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return false;
-    return clientId.endsWith('.apps.googleusercontent.com');
-  }
-
   ngAfterViewInit(): void {
     if (!window.google || !this.hasValidGoogleClientId()) {
       this.googleUnavailable.set(true);
@@ -190,7 +165,7 @@ export class GoogleLoginComponent implements AfterViewInit {
       },
     });
 
-    window.google.accounts.id.renderButton(this.googleBtn.nativeElement, {
+    google.accounts.id.renderButton(this.googleBtn.nativeElement, {
       theme: 'filled_black',
       size: 'large',
       shape: 'pill',
