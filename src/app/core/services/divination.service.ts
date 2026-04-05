@@ -12,7 +12,8 @@ export interface ShuffledCard {
 export class DivinationService {
 
   getDeck(system: DivinationSystem): DivinationCard[] {
-    return DECK_MAP[system] ?? [];
+    const deck = DECK_MAP[system] ?? [];
+    return deck.length > 0 ? deck : this.buildFallbackDeck(system);
   }
 
   /** Returns the full deck shuffled with reversals pre-determined */
@@ -50,6 +51,18 @@ export class DivinationService {
     }
     const config = SPREAD_CONFIGS[spreadType];
     return config.positions[index] ?? `Position ${index + 1}`;
+  }
+
+  private buildFallbackDeck(system: DivinationSystem): DivinationCard[] {
+    return Array.from({ length: 36 }, (_, i) => ({
+      id: i + 1,
+      system,
+      name: `Card ${i + 1}`,
+      symbol: '✦',
+      keywords: ['guidance', 'insight', 'reflection'],
+      meaning: 'This oracle card invites reflection, awareness, and intentional action.',
+      reversible: true,
+    }));
   }
 
   private shuffle<T>(array: T[]): T[] {
