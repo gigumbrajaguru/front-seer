@@ -91,7 +91,12 @@ declare global {
       width: 100%;
       min-height: 40px;
       display: flex;
-      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      color: #9f8fb2;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.7rem;
     }
 
     .oauth-note {
