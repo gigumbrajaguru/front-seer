@@ -19,6 +19,9 @@ interface SpreadOption {
 })
 export class SpreadSelectorComponent {
   selected = input<SpreadType>('three-card');
+  selectedCustomCount = input<number | undefined>(undefined);
+  suggestedTypes = input<SpreadType[]>([]);
+  suggestionLabels = input<Partial<Record<SpreadType, string>>>({});
   selectedChange = output<{ type: SpreadType; customCount?: number }>();
 
   customCount = signal(5);
@@ -34,11 +37,24 @@ export class SpreadSelectorComponent {
   select(key: SpreadType): void {
     this.selectedChange.emit({
       type: key,
-      customCount: key === 'custom' ? this.customCount() : undefined
+      customCount: key === 'custom' ? this.customCountInputValue() : undefined
     });
   }
 
-  onCustomCountChange(): void {
+  isSuggested(key: SpreadType): boolean {
+    return this.suggestedTypes().includes(key);
+  }
+
+  suggestionLabel(key: SpreadType): string {
+    return this.suggestionLabels()[key] ?? 'Suggested';
+  }
+
+  customCountInputValue(): number {
+    return this.selectedCustomCount() ?? this.customCount();
+  }
+
+  onCustomCountChange(value: number): void {
+    this.customCount.set(Number(value));
     if (this.selected() === 'custom') {
       this.selectedChange.emit({ type: 'custom', customCount: this.customCount() });
     }

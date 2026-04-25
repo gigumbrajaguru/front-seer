@@ -30,12 +30,13 @@ export class DivinationService {
   buildDrawnCards(
     selected: ShuffledCard[],
     spreadType: SpreadType,
-    customCount?: number
+    customCount?: number,
+    positionLabels?: string[]
   ): DrawnCard[] {
     return selected.map((item, index) => ({
       card: item.card,
       isReversed: item.isReversed,
-      positionLabel: this.getPositionLabel(spreadType, index, selected.length),
+      positionLabel: this.getPositionLabel(spreadType, index, selected.length, positionLabels),
       revealed: true
     }));
   }
@@ -45,7 +46,15 @@ export class DivinationService {
     return SPREAD_CONFIGS[spreadType]?.count ?? 1;
   }
 
-  private getPositionLabel(spreadType: SpreadType, index: number, total: number): string {
+  private getPositionLabel(
+    spreadType: SpreadType,
+    index: number,
+    total: number,
+    positionLabels?: string[]
+  ): string {
+    const suggestedLabel = positionLabels?.[index]?.trim();
+    if (suggestedLabel) return suggestedLabel;
+
     if (spreadType === 'custom') {
       return total === 1 ? 'Card' : `Position ${index + 1}`;
     }

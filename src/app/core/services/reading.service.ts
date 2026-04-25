@@ -1,7 +1,12 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { DivinationSystem, DrawnCard } from '../models/card.model';
 import { SpreadType } from '../models/spread.model';
-import { ReadingSession, OracleReading } from '../models/session.model';
+import { ApiSpreadSuggestionResponse, ReadingSession, OracleReading } from '../models/session.model';
+
+interface SpreadSelectionDetails {
+  spreadLabel?: string;
+  positionLabels?: string[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class ReadingService {
@@ -46,11 +51,40 @@ export class ReadingService {
   });
 
   setQuestion(question: string): void {
-    this._session.update(s => ({ ...s, question }));
+    this._session.update(s => ({
+      ...s,
+      question,
+      spreadSuggestions: undefined,
+      spreadSuggestionError: undefined,
+    }));
   }
 
   setFileContent(content: string): void {
     this._session.update(s => ({ ...s, fileContent: content }));
+  }
+
+  setSpreadSuggestions(suggestions: ApiSpreadSuggestionResponse): void {
+    this._session.update(s => ({
+      ...s,
+      spreadSuggestions: suggestions,
+      spreadSuggestionError: undefined,
+    }));
+  }
+
+  setSpreadSuggestionError(error: string): void {
+    this._session.update(s => ({
+      ...s,
+      spreadSuggestions: undefined,
+      spreadSuggestionError: error,
+    }));
+  }
+
+  clearSpreadSuggestions(): void {
+    this._session.update(s => ({
+      ...s,
+      spreadSuggestions: undefined,
+      spreadSuggestionError: undefined,
+    }));
   }
 
   submitQuestion(): void {
@@ -79,10 +113,21 @@ export class ReadingService {
     }));
   }
 
-  setSpreadForOracle(index: number, spreadType: SpreadType, customCount?: number): void {
+  setSpreadForOracle(
+    index: number,
+    spreadType: SpreadType,
+    customCount?: number,
+    details?: SpreadSelectionDetails
+  ): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
-      oracleReadings[index] = { ...oracleReadings[index], spreadType, customCount };
+      oracleReadings[index] = {
+        ...oracleReadings[index],
+        spreadType,
+        customCount,
+        spreadLabel: details?.spreadLabel,
+        positionLabels: details?.positionLabels,
+      };
       return { ...s, oracleReadings };
     });
   }

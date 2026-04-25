@@ -5,9 +5,14 @@
       <button
         class="spread-btn"
         [class.active]="selected() === spread.key"
+        [class.suggested]="isSuggested(spread.key)"
         (click)="select(spread.key)"
         [attr.aria-pressed]="selected() === spread.key"
+        [attr.title]="isSuggested(spread.key) ? suggestionLabel(spread.key) : null"
       >
+        @if (isSuggested(spread.key)) {
+          <span class="suggestion-mark">Suggested</span>
+        }
         <span class="spread-count">{{ spread.icon }}</span>
         <span class="spread-name">{{ spread.label }}</span>
       </button>
@@ -22,8 +27,8 @@
         type="number"
         min="1"
         max="15"
-        [(ngModel)]="customCount"
-        (ngModelChange)="onCustomCountChange()"
+        [ngModel]="customCountInputValue()"
+        (ngModelChange)="onCustomCountChange($event)"
       />
     </div>
   }

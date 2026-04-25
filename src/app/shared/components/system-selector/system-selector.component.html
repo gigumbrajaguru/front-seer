@@ -6,10 +6,15 @@
       <button
         class="system-btn"
         [class.active]="isSelected(sys.key)"
+        [class.suggested]="isSuggested(sys.key)"
         (click)="toggle(sys.key)"
         [attr.aria-pressed]="isSelected(sys.key)"
+        [attr.title]="isSuggested(sys.key) ? suggestionLabel(sys.key) : null"
       >
         <span class="check-mark">✓</span>
+        @if (isSuggested(sys.key)) {
+          <span class="suggestion-mark">Suggested</span>
+        }
         <span class="sys-icon">{{ sys.icon }}</span>
         <span class="sys-name">{{ sys.label }}</span>
         <span class="sys-count">{{ sys.count }} cards</span>

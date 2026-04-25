@@ -20,6 +20,8 @@ interface SystemOption {
 export class SystemSelectorComponent {
   /** For multi-select mode (default) */
   selectedSystems = input<DivinationSystem[]>([]);
+  suggestedSystems = input<DivinationSystem[]>([]);
+  suggestionLabels = input<Partial<Record<DivinationSystem, string>>>({});
   /** Emits toggle of a single system */
   systemToggled = output<DivinationSystem>();
 
@@ -39,6 +41,14 @@ export class SystemSelectorComponent {
 
   isSelected(key: DivinationSystem): boolean {
     return this.selectedSystems().includes(key);
+  }
+
+  isSuggested(key: DivinationSystem): boolean {
+    return this.suggestedSystems().includes(key);
+  }
+
+  suggestionLabel(key: DivinationSystem): string {
+    return this.suggestionLabels()[key] ?? 'Suggested for this question';
   }
 
   toggle(key: DivinationSystem): void {

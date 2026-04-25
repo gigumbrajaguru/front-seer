@@ -55,6 +55,12 @@
       transform: scale(1);
     }
   }
+
+  &.suggested:not(.active) {
+    border-color: rgba(212, 175, 55, 0.65);
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(255, 255, 255, 0.04));
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.08), 0 8px 18px rgba(212, 175, 55, 0.08);
+  }
 }
 
 .check-mark {
@@ -83,4 +89,20 @@
 .sys-count {
   font-size: 0.65rem;
   opacity: 0.6;
+}
+
+.suggestion-mark {
+  position: absolute;
+  top: -0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #d4af37;
+  color: #151019;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }

@@ -92,6 +92,19 @@
   padding: 1rem 1.25rem;
 }
 
+.error-block {
+  background: rgba(192, 64, 64, 0.08);
+  border: 1px solid rgba(192, 64, 64, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.error-text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #e08080;
+}
+
 .block-label {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -125,6 +138,21 @@
   color: #d4af6a;
   margin: 0 0 1rem;
   text-transform: uppercase;
+}
+
+.final-summary {
+  background: linear-gradient(135deg, rgba(212, 175, 106, 0.1), rgba(107, 63, 160, 0.08));
+  border: 1px solid rgba(212, 175, 106, 0.28);
+  border-radius: 0.875rem;
+  padding: 1.4rem;
+  margin-bottom: 2rem;
+}
+
+.summary-text {
+  margin: 0;
+  line-height: 1.75;
+  color: #e8e0d0;
+  white-space: pre-line;
 }
 
 .interpretation-section {
@@ -194,6 +222,24 @@
   color: #c06080;
   letter-spacing: 0.06em;
   white-space: nowrap;
+}
+
+.card-insight-block {
+  border-top: 1px solid rgba(212, 175, 106, 0.12);
+  padding-top: 0.7rem;
+
+  &.missing {
+    opacity: 0.75;
+  }
+}
+
+.insight-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+  color: #d4af6a;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .card-insight,

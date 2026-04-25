@@ -18,20 +18,31 @@
     </div>
   }
 
-  @for (reading of session().oracleReadings; track $index) {
+  @if (finalSummary(); as summary) {
+    <section class="final-summary">
+      <h2 class="section-title">Final Summarized Answer</h2>
+      <p class="summary-text">{{ summary }}</p>
+    </section>
+  }
+
+  @for (reading of session().oracleReadings; track $index; let oracleIndex = $index) {
     <section class="oracle-section">
       <div class="oracle-section-header">
         <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
         <div class="oracle-section-title">
           <h2>{{ systemLabels[reading.system] }}</h2>
-          <span class="spread-badge">{{ reading.spreadType }}</span>
+          <span class="spread-badge">{{ displaySpreadLabel(reading) }}</span>
         </div>
       </div>
 
-      @if (apiResults()[$index]; as result) {
+      @if (apiResults()[oracleIndex]; as result) {
         <div class="interpretation-block">
-          <h3 class="block-label">Interpretation</h3>
+          <h3 class="block-label">Question Answer</h3>
           <p class="interpretation-text">{{ result.interpretation }}</p>
+        </div>
+      } @else if (apiErrors()[oracleIndex]; as error) {
+        <div class="error-block">
+          <p class="error-text">⚠ {{ error }}</p>
         </div>
       }
 
@@ -49,8 +60,16 @@
               }
             </div>
 
-            @if (getCardInsight($index, drawn.card.id); as insight) {
-              <p class="card-insight">{{ insight }}</p>
+            @if (getCardInsight(oracleIndex, drawn.card.id); as insight) {
+              <div class="card-insight-block">
+                <span class="insight-label">Pick Interpretation</span>
+                <p class="card-insight">{{ insight }}</p>
+              </div>
+            } @else if (apiResults()[oracleIndex]) {
+              <div class="card-insight-block missing">
+                <span class="insight-label">Pick Interpretation</span>
+                <p class="card-insight">No AI interpretation was returned for this pick.</p>
+              </div>
             } @else {
               <p class="card-meaning">{{ drawn.card.meaning }}</p>
             }

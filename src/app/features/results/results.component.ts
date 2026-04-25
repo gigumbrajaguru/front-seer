@@ -1,10 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
 import { ReadingApiService } from '../../core/services/reading-api.service';
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
-import { ApiReadingResponse } from '../../core/models/session.model';
+import { ApiReadingResponse, OracleReading } from '../../core/models/session.model';
 import { DivinationSystem } from '../../core/models/card.model';
 
 @Component({
@@ -22,7 +22,7 @@ export class ResultsComponent implements OnInit {
   readonly session = this.readingService.session;
   readonly isLoading = signal(false);
   readonly apiResults = signal<(ApiReadingResponse | null)[]>([]);
-  readonly apiError = signal<string | null>(null);
+  readonly apiErrors = signal<(string | null)[]>([]);
 
   readonly systemLabels: Record<DivinationSystem, string> = {
     'tarot': 'Tarot',
@@ -52,6 +52,30 @@ export class ResultsComponent implements OnInit {
     'oracle-generic': '✨',
   };
 
+  readonly finalSummary = computed(() => {
+    if (this.isLoading()) return null;
+
+    const readings = this.session().oracleReadings;
+    const completedResults = this.apiResults()
+      .map((result, index) => {
+        const system = readings[index]?.system;
+        return result?.interpretation
+          ? {
+              interpretation: result.interpretation,
+              label: system ? this.systemLabels[system] : 'Oracle',
+            }
+          : null;
+      })
+      .filter((result): result is { interpretation: string; label: string } => result !== null);
+
+    if (completedResults.length === 0) return null;
+    if (completedResults.length === 1) return completedResults[0].interpretation;
+
+    return completedResults
+      .map(result => `${result.label}: ${result.interpretation}`)
+      .join('\n\n');
+  });
+
   ngOnInit(): void {
     const readings = this.session().oracleReadings;
     if (!readings || readings.length === 0 || readings.every(r => r.drawnCards.length === 0)) {
@@ -67,8 +91,14 @@ export class ResultsComponent implements OnInit {
 
     this.isLoading.set(true);
     this.apiResults.set(new Array(readings.length).fill(null));
+    this.apiErrors.set(new Array(readings.length).fill(null));
 
     let completed = 0;
+
+    const finish = () => {
+      completed++;
+      if (completed >= readings.length) this.isLoading.set(false);
+    };
 
     readings.forEach((reading, index) => {
       this.readingApiService
@@ -76,7 +106,7 @@ export class ResultsComponent implements OnInit {
           question: s.question,
           fileContent: s.fileContent,
           system: reading.system,
-          spreadType: reading.spreadType,
+          spreadType: reading.spreadLabel ?? reading.spreadType,
           cards: reading.drawnCards.map(dc => ({
             id: dc.card.id,
             name: dc.card.name,
@@ -91,16 +121,16 @@ export class ResultsComponent implements OnInit {
               updated[index] = result;
               return updated;
             });
-            completed++;
-            if (completed >= readings.length) {
-              this.isLoading.set(false);
-            }
+            finish();
           },
-          error: () => {
-            completed++;
-            if (completed >= readings.length) {
-              this.isLoading.set(false);
-            }
+          error: err => {
+            const msg = err?.error?.detail ?? 'Reading unavailable — check API configuration.';
+            this.apiErrors.update(arr => {
+              const updated = [...arr];
+              updated[index] = msg;
+              return updated;
+            });
+            finish();
           },
         });
     });
@@ -108,6 +138,10 @@ export class ResultsComponent implements OnInit {
 
   getCardInsight(oracleIndex: number, cardId: number): string | null {
     return this.apiResults()[oracleIndex]?.cardInsights?.find(i => i.cardId === cardId)?.insight ?? null;
+  }
+
+  displaySpreadLabel(reading: OracleReading): string {
+    return reading.spreadLabel ?? reading.spreadType;
   }
 
   newReading(): void {

@@ -42,8 +42,14 @@
     <section class="setup-section aurora-panel">
       <app-question-panel />
       <div class="draw-section">
-        <button type="button" class="btn-draw" (click)="submitQuestion()" [disabled]="!session().question.trim()">
-          <span class="btn-icon">✦</span> Ask the Oracle
+        <button
+          type="button"
+          class="btn-draw"
+          (click)="submitQuestion()"
+          [disabled]="!session().question.trim() || isSuggestingSpreads()"
+        >
+          <span class="btn-icon">✦</span>
+          {{ isSuggestingSpreads() ? 'Analyzing question…' : 'Ask the Oracle' }}
         </button>
       </div>
     </section>
@@ -58,6 +64,8 @@
       } @else {
         <app-system-selector
           [selectedSystems]="session().selectedOracles"
+          [suggestedSystems]="suggestedSystems()"
+          [suggestionLabels]="suggestionLabelsBySystem()"
           (systemToggled)="toggleOracle($event)"
         />
         <div class="draw-section">
@@ -84,7 +92,7 @@
       <h2 class="section-heading">Choose a Spread for Each Oracle</h2>
 
       <div class="spread-grid">
-        @for (reading of session().oracleReadings; track $index) {
+        @for (reading of session().oracleReadings; track $index; let oracleIndex = $index) {
           <div class="oracle-spread-block">
             <div class="oracle-spread-header">
               <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
@@ -92,7 +100,10 @@
             </div>
             <app-spread-selector
               [selected]="reading.spreadType"
-              (selectedChange)="onSpreadChange($index, $event)"
+              [selectedCustomCount]="reading.customCount"
+              [suggestedTypes]="suggestedSpreadTypesForSystem(reading.system)"
+              [suggestionLabels]="spreadSuggestionLabelsForSystem(reading.system)"
+              (selectedChange)="onSpreadChange(oracleIndex, $event)"
             />
           </div>
         }
@@ -118,7 +129,7 @@
                 <span class="oracle-badge-icon">{{ systemIcons[oracle.system] }}</span>
                 {{ systemLabels[oracle.system] }}
               </h2>
-              <p class="spread-label">{{ oracle.spreadType }}</p>
+              <p class="spread-label">{{ displaySpreadLabel(oracle) }}</p>
             </div>
             @if (!hasConfirmedCards(oracleIndex)) {
               <button type="button" class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">↺ Reshuffle</button>
