@@ -133,6 +133,7 @@ export class GoogleLoginComponent implements AfterViewInit {
   private readonly authService = inject(AuthService);
   readonly googleUnavailable = signal(false);
 
+  /** Checks that the configured Google client ID is present and not a placeholder. */
   private hasValidGoogleClientId(): boolean {
     const clientId = environment.googleClientId?.trim() ?? '';
     if (!clientId) return false;
@@ -140,18 +141,22 @@ export class GoogleLoginComponent implements AfterViewInit {
     return clientId.endsWith('.apps.googleusercontent.com');
   }
 
+  /** Whether Facebook OAuth has enough frontend configuration to show as enabled. */
   hasFacebook(): boolean {
     return !!environment.facebookClientId;
   }
 
+  /** Whether TikTok OAuth has enough frontend configuration to show as enabled. */
   hasTikTok(): boolean {
     return !!environment.tiktokClientKey;
   }
 
+  /** Whether Discord OAuth has enough frontend configuration to show as enabled. */
   hasDiscord(): boolean {
     return !!environment.discordClientId;
   }
 
+  /** Initializes and renders the Google sign-in button after the view is ready. */
   ngAfterViewInit(): void {
     const googleClient = window.google;
     if (!googleClient || !this.hasValidGoogleClientId()) {
@@ -175,6 +180,7 @@ export class GoogleLoginComponent implements AfterViewInit {
     });
   }
 
+  /** Starts the selected social provider OAuth redirect flow. */
   startSocialLogin(provider: SocialProvider): void {
     const redirectUri = `${window.location.origin}/`;
     let url = '';

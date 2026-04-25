@@ -53,9 +53,11 @@ export class ResultsComponent implements OnInit {
     'oracle-generic': '✨',
   };
 
+  /** Builds the top finalized summary from the combined backend result or fallback text. */
   readonly finalSummary = computed(() => {
     if (this.isLoading()) return null;
 
+    // Prefer the backend's combined summary so the top section is one answer for all methods.
     const finalResult = this.finalResult();
     if (finalResult) {
       const summaryParts = [
@@ -92,6 +94,7 @@ export class ResultsComponent implements OnInit {
     return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
   });
 
+  /** Redirects empty sessions and starts backend interpretation requests for completed readings. */
   ngOnInit(): void {
     const readings = this.session().oracleReadings;
     if (!readings || readings.length === 0 || readings.every(r => r.drawnCards.length === 0)) {
@@ -101,6 +104,7 @@ export class ResultsComponent implements OnInit {
     this.fetchInterpretations();
   }
 
+  /** Requests the combined summary and each per-oracle interpretation for the results screen. */
   private fetchInterpretations(): void {
     const s = this.session();
     const readings = s.oracleReadings;
@@ -110,6 +114,8 @@ export class ResultsComponent implements OnInit {
     this.apiResults.set(new Array(readings.length).fill(null));
     this.apiErrors.set(new Array(readings.length).fill(null));
 
+    // Results are requested only after the user presses "Get Your Reading" and enters this route.
+    // The combined request drives the top summary; per-oracle requests drive card insights below.
     let completed = 0;
     const totalRequests = readings.length + 1;
 
@@ -179,34 +185,42 @@ export class ResultsComponent implements OnInit {
     });
   }
 
+  /** Finds the AI insight for a specific drawn card in one oracle result. */
   getCardInsight(oracleIndex: number, cardId: number): string | null {
     return this.apiResults()[oracleIndex]?.cardInsights?.find(i => i.cardId === cardId)?.insight ?? null;
   }
 
+  /** Extracts final verdict text from either backend naming convention. */
   private finalVerdictText(result: ApiReadingResponse | null | undefined): string {
     return (result?.finalVerdict ?? result?.final_verdict ?? '').trim();
   }
 
+  /** Extracts finalized answer text with interpretation as the display fallback. */
   private finalizedAnswerText(result: ApiReadingResponse | null | undefined): string {
     return (result?.finalized_answer ?? result?.interpretation ?? '').trim();
   }
 
+  /** Joins fallback per-oracle summary text into one paragraph. */
   private joinSummaryText(values: string[]): string {
     return values.map(value => value.trim()).filter(Boolean).join(' ');
   }
 
+  /** Whether the given oracle result includes method-level summaries. */
   hasMethodSummaries(oracleIndex: number): boolean {
     return (this.apiResults()[oracleIndex]?.methodSummaries?.length ?? 0) > 0;
   }
 
+  /** Whether the given oracle is still waiting for either a result or an error. */
   isOraclePending(oracleIndex: number): boolean {
     return !this.apiResults()[oracleIndex] && !this.apiErrors()[oracleIndex];
   }
 
+  /** Returns the spread label selected or suggested for display. */
   displaySpreadLabel(reading: OracleReading): string {
     return reading.spreadLabel ?? reading.spreadType;
   }
 
+  /** Clears the session and returns the user to the first reading step. */
   newReading(): void {
     this.readingService.reset();
     this.router.navigate(['/']);

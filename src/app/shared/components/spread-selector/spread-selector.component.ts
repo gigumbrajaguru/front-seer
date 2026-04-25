@@ -34,6 +34,7 @@ export class SpreadSelectorComponent {
     { key: 'custom', label: 'Custom', count: '?', icon: '✦' },
   ];
 
+  /** Emits the chosen spread type and custom count when relevant. */
   select(key: SpreadType): void {
     this.selectedChange.emit({
       type: key,
@@ -41,18 +42,22 @@ export class SpreadSelectorComponent {
     });
   }
 
+  /** Whether this spread was recommended by the backend suggestion response. */
   isSuggested(key: SpreadType): boolean {
     return this.suggestedTypes().includes(key);
   }
 
+  /** Returns the human-readable recommendation label for a spread. */
   suggestionLabel(key: SpreadType): string {
     return this.suggestionLabels()[key] ?? 'Suggested';
   }
 
+  /** Resolves the active custom count from parent input or local state. */
   customCountInputValue(): number {
     return this.selectedCustomCount() ?? this.customCount();
   }
 
+  /** Updates custom spread count and emits immediately when custom is selected. */
   onCustomCountChange(value: number): void {
     this.customCount.set(Number(value));
     if (this.selected() === 'custom') {

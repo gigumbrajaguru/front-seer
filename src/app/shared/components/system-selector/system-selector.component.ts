@@ -39,18 +39,22 @@ export class SystemSelectorComponent {
     { key: 'oracle-generic', label: 'Oracle Generic', icon: '✨', count: 44, group: 'Oracle' },
   ];
 
+  /** Whether the given system is currently selected by the user. */
   isSelected(key: DivinationSystem): boolean {
     return this.selectedSystems().includes(key);
   }
 
+  /** Whether the given system was recommended by the spread suggestion response. */
   isSuggested(key: DivinationSystem): boolean {
     return this.suggestedSystems().includes(key);
   }
 
+  /** Returns the display label explaining why a system is suggested. */
   suggestionLabel(key: DivinationSystem): string {
     return this.suggestionLabels()[key] ?? 'Suggested for this question';
   }
 
+  /** Emits a selection toggle event for the parent reading component. */
   toggle(key: DivinationSystem): void {
     this.systemToggled.emit(key);
   }

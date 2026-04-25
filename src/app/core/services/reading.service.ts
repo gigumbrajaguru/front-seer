@@ -18,18 +18,22 @@ export class ReadingService {
     currentOracleIndex: 0
   });
 
+  /** Read-only session signal consumed by components. */
   readonly session = this._session.asReadonly();
 
+  /** Currently active oracle during the drawing flow. */
   readonly currentOracle = computed<OracleReading | null>(() => {
     const s = this._session();
     return s.oracleReadings[s.currentOracleIndex] ?? null;
   });
 
+  /** Whether the active oracle already has selected cards. */
   readonly hasDrawnCards = computed(() => {
     const oracle = this.currentOracle();
     return oracle ? oracle.drawnCards.length > 0 : false;
   });
 
+  /** Whether the active oracle's drawn cards are all revealed. */
   readonly canSubmitCurrentOracle = computed(() => {
     const oracle = this.currentOracle();
     return oracle
@@ -37,11 +41,13 @@ export class ReadingService {
       : false;
   });
 
+  /** Whether the active oracle is the final selected oracle. */
   readonly isLastOracle = computed(() => {
     const s = this._session();
     return s.currentOracleIndex >= s.oracleReadings.length - 1;
   });
 
+  /** Whether every selected oracle has revealed drawn cards. */
   readonly allOraclesComplete = computed(() => {
     const s = this._session();
     return (
@@ -50,6 +56,7 @@ export class ReadingService {
     );
   });
 
+  /** Stores the user question and clears stale spread suggestions. */
   setQuestion(question: string): void {
     this._session.update(s => ({
       ...s,
@@ -59,10 +66,12 @@ export class ReadingService {
     }));
   }
 
+  /** Stores optional uploaded or pasted context for later AI requests. */
   setFileContent(content: string): void {
     this._session.update(s => ({ ...s, fileContent: content }));
   }
 
+  /** Stores successful spread suggestions from the backend. */
   setSpreadSuggestions(suggestions: ApiSpreadSuggestionResponse): void {
     this._session.update(s => ({
       ...s,
@@ -71,6 +80,7 @@ export class ReadingService {
     }));
   }
 
+  /** Stores the spread suggestion error shown during manual fallback selection. */
   setSpreadSuggestionError(error: string): void {
     this._session.update(s => ({
       ...s,
@@ -79,6 +89,7 @@ export class ReadingService {
     }));
   }
 
+  /** Clears spread suggestion data before a new suggestion request. */
   clearSpreadSuggestions(): void {
     this._session.update(s => ({
       ...s,
@@ -87,10 +98,12 @@ export class ReadingService {
     }));
   }
 
+  /** Advances from question entry to oracle selection. */
   submitQuestion(): void {
     this._session.update(s => ({ ...s, step: 'oracle-selection' }));
   }
 
+  /** Adds or removes an oracle system from the selected set. */
   toggleOracle(system: DivinationSystem): void {
     this._session.update(s => {
       const already = s.selectedOracles.includes(system);
@@ -101,6 +114,7 @@ export class ReadingService {
     });
   }
 
+  /** Creates one reading shell per selected oracle and enters spread selection. */
   submitOracleSelection(): void {
     this._session.update(s => ({
       ...s,
@@ -113,6 +127,7 @@ export class ReadingService {
     }));
   }
 
+  /** Updates spread configuration for a specific oracle reading. */
   setSpreadForOracle(
     index: number,
     spreadType: SpreadType,
@@ -132,10 +147,12 @@ export class ReadingService {
     });
   }
 
+  /** Advances from spread selection to card drawing. */
   submitSpreadSelection(): void {
     this._session.update(s => ({ ...s, step: 'drawing', currentOracleIndex: 0 }));
   }
 
+  /** Stores drawn cards on the currently active oracle. */
   setDrawnCards(cards: DrawnCard[]): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -147,6 +164,7 @@ export class ReadingService {
     });
   }
 
+  /** Stores drawn cards on a specific oracle by index. */
   setDrawnCardsForOracle(index: number, cards: DrawnCard[]): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -158,6 +176,7 @@ export class ReadingService {
     });
   }
 
+  /** Marks one card in the active oracle as revealed. */
   revealCard(index: number): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -172,6 +191,7 @@ export class ReadingService {
     });
   }
 
+  /** Marks every card in the active oracle as revealed. */
   revealAll(): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -182,10 +202,12 @@ export class ReadingService {
     });
   }
 
+  /** Advances drawing focus to the next selected oracle. */
   nextOracle(): void {
     this._session.update(s => ({ ...s, currentOracleIndex: s.currentOracleIndex + 1 }));
   }
 
+  /** Clears cards for the currently active oracle. */
   resetCurrentOracle(): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -197,6 +219,7 @@ export class ReadingService {
     });
   }
 
+  /** Clears cards for a specific oracle by index. */
   resetOracle(index: number): void {
     this._session.update(s => {
       const oracleReadings = [...s.oracleReadings];
@@ -208,6 +231,7 @@ export class ReadingService {
     });
   }
 
+  /** Resets the full reading session back to the first step. */
   reset(): void {
     this._session.set({
       question: '',
