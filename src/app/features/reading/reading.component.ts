@@ -50,11 +50,13 @@ export class ReadingComponent {
   readonly shuffledDecks = signal<Record<number, ShuffledCard[]>>({});
   readonly selectedIndicesByOracle = signal<Record<number, number[]>>({});
 
+  /** True when every selected oracle has confirmed drawn cards. */
   readonly allOraclesReady = computed(() =>
     this.session().oracleReadings.length > 0 &&
     this.session().oracleReadings.every(oracle => oracle.drawnCards.length > 0)
   );
 
+  /** Converts AI-suggested method names into selectable frontend systems. */
   readonly suggestedSystems = computed(() => {
     const systems: DivinationSystem[] = [];
     for (const method of this.session().spreadSuggestions?.methods ?? []) {
@@ -65,6 +67,7 @@ export class ReadingComponent {
     return systems;
   });
 
+  /** Builds short spread suggestion labels shown under each suggested system. */
   readonly suggestionLabelsBySystem = computed(() => {
     const labels: Partial<Record<DivinationSystem, string>> = {};
     for (const method of this.session().spreadSuggestions?.methods ?? []) {
@@ -105,6 +108,7 @@ export class ReadingComponent {
     'oracle-generic': '✨',
   };
 
+  /** Initializes per-oracle shuffled decks when the flow enters the drawing step. */
   constructor() {
     effect(() => {
       const step = this.session().step;
@@ -139,6 +143,7 @@ export class ReadingComponent {
     });
   }
 
+  /** Requests spread suggestions for the current question and advances the flow. */
   submitQuestion(): void {
     if (!this.session().question.trim()) return;
 
@@ -165,15 +170,18 @@ export class ReadingComponent {
       });
   }
 
+  /** Toggles one oracle system in the user's selected oracle list. */
   toggleOracle(system: DivinationSystem): void {
     this.readingService.toggleOracle(system);
   }
 
+  /** Confirms selected oracle systems and moves to spread selection. */
   submitOracles(): void {
     if (this.session().selectedOracles.length === 0) return;
     this.readingService.submitOracleSelection();
   }
 
+  /** Updates the spread choice for one oracle, preserving suggested custom counts when available. */
   onSpreadChange(index: number, event: { type: SpreadType; customCount?: number }): void {
     const reading = this.session().oracleReadings[index];
     const matchingSuggestion = reading
@@ -186,32 +194,39 @@ export class ReadingComponent {
     this.readingService.setSpreadForOracle(index, event.type, customCount);
   }
 
+  /** Confirms spread choices and moves to card drawing. */
   submitSpreads(): void {
     this.readingService.submitSpreadSelection();
   }
 
+  /** Returns the number of cards the oracle at the given index needs. */
   requiredCountFor(index: number): number {
     const oracle = this.session().oracleReadings[index];
     if (!oracle) return 0;
     return this.divinationService.getRequiredCount(oracle.spreadType, oracle.customCount);
   }
 
+  /** Returns the selected card indexes for one oracle's shuffled deck. */
   selectedIndices(index: number): number[] {
     return this.selectedIndicesByOracle()[index] ?? [];
   }
 
+  /** Whether the selected-card count has reached the spread requirement. */
   selectionComplete(index: number): boolean {
     return this.selectedIndices(index).length >= this.requiredCountFor(index);
   }
 
+  /** Whether an oracle already has confirmed drawn cards in the session. */
   hasConfirmedCards(index: number): boolean {
     return (this.session().oracleReadings[index]?.drawnCards.length ?? 0) > 0;
   }
 
+  /** Returns the shuffled deck for one oracle drawing block. */
   shuffledDeck(index: number): ShuffledCard[] {
     return this.shuffledDecks()[index] ?? [];
   }
 
+  /** Selects or deselects one card while respecting the required count. */
   toggleCardSelection(oracleIndex: number, cardIndex: number): void {
     const currentMap = { ...this.selectedIndicesByOracle() };
     const current = currentMap[oracleIndex] ?? [];
@@ -225,18 +240,22 @@ export class ReadingComponent {
     this.selectedIndicesByOracle.set(currentMap);
   }
 
+  /** Checks whether a specific card is selected for an oracle. */
   isCardSelected(oracleIndex: number, cardIndex: number): boolean {
     return this.selectedIndices(oracleIndex).includes(cardIndex);
   }
 
+  /** Returns the 1-based visual selection order for a selected card. */
   selectionOrder(oracleIndex: number, cardIndex: number): number {
     return this.selectedIndices(oracleIndex).indexOf(cardIndex) + 1;
   }
 
+  /** Confirms selected cards for one oracle without starting AI interpretation. */
   confirmSelection(index: number): void {
     const oracle = this.session().oracleReadings[index];
     if (!oracle) return;
 
+    // Confirming a draw only stores local card state; interpretation starts on the results route.
     const selected = this.selectedIndices(index).map(i => this.shuffledDeck(index)[i]);
     const cards = this.divinationService.buildDrawnCards(
       selected,
@@ -247,6 +266,7 @@ export class ReadingComponent {
     this.readingService.setDrawnCardsForOracle(index, cards);
   }
 
+  /** Replaces one oracle's deck with a fresh shuffle and clears its selections. */
   reshuffleDeck(index: number): void {
     const oracle = this.session().oracleReadings[index];
     if (!oracle) return;
@@ -259,6 +279,7 @@ export class ReadingComponent {
     this.selectedIndicesByOracle.set(selections);
   }
 
+  /** Clears confirmed cards and immediately creates a new shuffled deck for that oracle. */
   redrawOracle(index: number): void {
     const oracle = this.session().oracleReadings[index];
     if (!oracle) return;
@@ -267,10 +288,13 @@ export class ReadingComponent {
     this.reshuffleDeck(index);
   }
 
+  /** Navigates to the results route where AI interpretation requests are made. */
   proceed(): void {
+    // The "Get Your Reading" action moves into the route that performs AI requests.
     this.router.navigate(['/results']);
   }
 
+  /** Returns all AI spread suggestions that map to a frontend oracle system. */
   suggestionsForSystem(system: DivinationSystem): ApiSpreadSuggestion[] {
     const suggestions: ApiSpreadSuggestion[] = [];
     for (const method of this.session().spreadSuggestions?.methods ?? []) {
@@ -281,6 +305,7 @@ export class ReadingComponent {
     return suggestions;
   }
 
+  /** Returns unique spread types suggested for a frontend oracle system. */
   suggestedSpreadTypesForSystem(system: DivinationSystem): SpreadType[] {
     const types = new Set<SpreadType>();
     for (const suggestion of this.suggestionsForSystem(system)) {
@@ -289,6 +314,7 @@ export class ReadingComponent {
     return [...types];
   }
 
+  /** Maps suggested spread types to the original AI-provided spread names. */
   spreadSuggestionLabelsForSystem(system: DivinationSystem): Partial<Record<SpreadType, string>> {
     const labels: Partial<Record<SpreadType, string>> = {};
     for (const suggestion of this.suggestionsForSystem(system)) {
@@ -298,10 +324,12 @@ export class ReadingComponent {
     return labels;
   }
 
+  /** Returns the user-facing spread label for a reading. */
   displaySpreadLabel(reading: OracleReading): string {
     return reading.spreadLabel ?? reading.spreadType;
   }
 
+  /** Maps flexible AI method names onto the app's supported oracle systems. */
   private systemsForMethod(method: string): DivinationSystem[] {
     const normalized = this.normalizeText(method);
 
@@ -318,6 +346,7 @@ export class ReadingComponent {
     return [];
   }
 
+  /** Converts one AI spread suggestion into the closest supported frontend spread type. */
   private spreadSelectionFromSuggestion(suggestion: ApiSpreadSuggestion): SuggestedSpreadSelection {
     const normalized = this.normalizeText(suggestion.spread);
     const count = Number(suggestion.element_count) || suggestion.positions.length || undefined;
@@ -339,6 +368,7 @@ export class ReadingComponent {
     return { type: 'custom', customCount: count ?? 5 };
   }
 
+  /** Normalizes text before matching method or spread names. */
   private normalizeText(value: string): string {
     return value.trim().toLowerCase().replace(/\s+/g, ' ');
   }

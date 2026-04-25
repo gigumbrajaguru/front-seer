@@ -20,7 +20,7 @@
 
   @if (finalSummary(); as summary) {
     <section class="final-summary">
-      <h2 class="section-title">Final Summarized Answer</h2>
+      <h2 class="section-title">Finalized Summary</h2>
       <p class="summary-text">{{ summary }}</p>
     </section>
   }
@@ -40,9 +40,25 @@
           <h3 class="block-label">Question Answer</h3>
           <p class="interpretation-text">{{ result.interpretation }}</p>
         </div>
+        @if (hasMethodSummaries(oracleIndex)) {
+          <div class="method-summary-list">
+            @for (methodSummary of result.methodSummaries; track methodSummary.method) {
+              <article class="method-summary">
+                <h3>{{ methodSummary.method }}</h3>
+                <p>{{ methodSummary.summary }}</p>
+              </article>
+            }
+          </div>
+        }
       } @else if (apiErrors()[oracleIndex]; as error) {
         <div class="error-block">
           <p class="error-text">⚠ {{ error }}</p>
+          <p class="fallback-note">Showing frontend default card data for this section.</p>
+        </div>
+      } @else {
+        <div class="section-loading">
+          <span class="mini-loader"></span>
+          <p>Waiting for this oracle interpretation…</p>
         </div>
       }
 
@@ -70,15 +86,25 @@
                 <span class="insight-label">Pick Interpretation</span>
                 <p class="card-insight">No AI interpretation was returned for this pick.</p>
               </div>
+            } @else if (apiErrors()[oracleIndex]) {
+              <div class="card-insight-block fallback">
+                <span class="insight-label">Default Meaning</span>
+                <p class="card-meaning">{{ drawn.card.meaning }}</p>
+              </div>
             } @else {
-              <p class="card-meaning">{{ drawn.card.meaning }}</p>
+              <div class="card-loading">
+                <span class="mini-loader"></span>
+                <p>Waiting for pick interpretation…</p>
+              </div>
             }
 
-            <div class="keywords">
-              @for (kw of drawn.card.keywords; track kw) {
-                <span class="keyword">{{ kw }}</span>
-              }
-            </div>
+            @if (!isOraclePending(oracleIndex)) {
+              <div class="keywords">
+                @for (kw of drawn.card.keywords; track kw) {
+                  <span class="keyword">{{ kw }}</span>
+                }
+              </div>
+            }
           </div>
         }
       </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadService {
+  /** Reads a .txt file into a string for use as additional reading context. */
   readTextFile(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       if (!file.name.endsWith('.txt')) {

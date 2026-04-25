@@ -12,8 +12,10 @@ export class AuthService {
 
   readonly currentUser = signal<GoogleUser | null>(this.loadUser());
 
+  /** Keeps local-storage-backed auth updates inside Angular change detection. */
   constructor(private ngZone: NgZone) {}
 
+  /** Restores a previously persisted user from local storage. */
   private loadUser(): GoogleUser | null {
     try {
       const stored = localStorage.getItem(this.USER_KEY);
@@ -23,6 +25,7 @@ export class AuthService {
     }
   }
 
+  /** Creates a user session from a Google identity credential JWT. */
   setUserFromCredential(credential: string): void {
     const payload = this.decodeJwt(credential);
     const user: GoogleUser = {
@@ -33,6 +36,7 @@ export class AuthService {
     this.persistUser(user);
   }
 
+  /** Creates a local manual user session for non-Google auth fallbacks. */
   setManualUser(name: string, email: string): void {
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
@@ -45,11 +49,13 @@ export class AuthService {
     });
   }
 
+  /** Clears the current user session and persisted auth data. */
   logout(): void {
     this.currentUser.set(null);
     localStorage.removeItem(this.USER_KEY);
   }
 
+  /** Stores the user in both the reactive signal and local storage. */
   private persistUser(user: GoogleUser): void {
     this.ngZone.run(() => {
       this.currentUser.set(user);
@@ -57,6 +63,7 @@ export class AuthService {
     });
   }
 
+  /** Decodes the Google JWT payload fields needed by the UI. */
   private decodeJwt(token: string): { name: string; email: string; picture: string } {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

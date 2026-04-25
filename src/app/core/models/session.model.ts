@@ -50,6 +50,7 @@ export interface ApiSpreadSuggestionResponse {
 }
 
 export interface ApiReadingRequest {
+  // Per-oracle interpretation request used by the results screen for card insights.
   question: string;
   fileContent?: string;
   system: DivinationSystem;
@@ -62,12 +63,37 @@ export interface ApiReadingRequest {
   }>;
 }
 
+export interface ApiCombinedReadingRequest {
+  // Combined request used for the single top-level finalized summary.
+  question: string;
+  fileContent?: string;
+  readings: Array<{
+    system: DivinationSystem;
+    spreadType: string;
+    cards: Array<{
+      id: number;
+      name: string;
+      position: string;
+      isReversed: boolean;
+    }>;
+  }>;
+}
+
 export interface CardInsight {
   cardId: number;
   insight: string;
 }
 
+export interface MethodSummary {
+  method: string;
+  summary: string;
+}
+
 export interface ApiReadingResponse {
   interpretation: string;
+  finalized_answer?: string;
+  finalVerdict?: string;
+  final_verdict?: string;
+  methodSummaries?: MethodSummary[];
   cardInsights: CardInsight[];
 }

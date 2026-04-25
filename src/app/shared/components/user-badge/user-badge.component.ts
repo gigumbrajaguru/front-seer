@@ -90,6 +90,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class UserBadgeComponent {
   readonly authService = inject(AuthService);
 
+  /** Signs out the current user from the local frontend session. */
   logout(): void {
     this.authService.logout();
   }

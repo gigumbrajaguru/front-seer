@@ -34,6 +34,7 @@ interface Star {
 export class StarFieldComponent implements OnInit {
   stars: Star[] = [];
 
+  /** Generates random star positions and animation timings for the background. */
   ngOnInit(): void {
     this.stars = Array.from({ length: 180 }, () => ({
       top: `${Math.random() * 100}%`,
