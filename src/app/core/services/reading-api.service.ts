@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ApiCombinedReadingRequest,
   ApiReadingRequest,
   ApiReadingResponse,
   ApiSpreadSuggestionRequest,
@@ -16,6 +17,10 @@ export class ReadingApiService {
 
   submitReading(request: ApiReadingRequest): Observable<ApiReadingResponse> {
     return this.http.post<ApiReadingResponse>(`${this.baseUrl}/api/reading`, request);
+  }
+
+  submitFinalSummary(request: ApiCombinedReadingRequest): Observable<ApiReadingResponse> {
+    return this.http.post<ApiReadingResponse>(`${this.baseUrl}/api/reading/final-summary`, request);
   }
 
   suggestSpreads(request: ApiSpreadSuggestionRequest): Observable<ApiSpreadSuggestionResponse> {

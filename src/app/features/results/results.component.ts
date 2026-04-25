@@ -21,6 +21,7 @@ export class ResultsComponent implements OnInit {
 
   readonly session = this.readingService.session;
   readonly isLoading = signal(false);
+  readonly finalResult = signal<ApiReadingResponse | null>(null);
   readonly apiResults = signal<(ApiReadingResponse | null)[]>([]);
   readonly apiErrors = signal<(string | null)[]>([]);
 
@@ -55,25 +56,40 @@ export class ResultsComponent implements OnInit {
   readonly finalSummary = computed(() => {
     if (this.isLoading()) return null;
 
-    const readings = this.session().oracleReadings;
+    const finalResult = this.finalResult();
+    if (finalResult) {
+      const summaryParts = [
+        this.finalVerdictText(finalResult) ? `Final verdict: ${this.finalVerdictText(finalResult)}` : '',
+        this.finalizedAnswerText(finalResult) ? `Finalized answer: ${this.finalizedAnswerText(finalResult)}` : '',
+      ].filter(Boolean);
+
+      return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
+    }
+
     const completedResults = this.apiResults()
-      .map((result, index) => {
-        const system = readings[index]?.system;
-        return result?.interpretation
+      .map(result => {
+        return result
           ? {
-              interpretation: result.interpretation,
-              label: system ? this.systemLabels[system] : 'Oracle',
+              finalVerdict: this.finalVerdictText(result),
+              finalizedAnswer: this.finalizedAnswerText(result),
             }
           : null;
       })
-      .filter((result): result is { interpretation: string; label: string } => result !== null);
+      .filter((result): result is {
+        finalVerdict: string;
+        finalizedAnswer: string;
+      } => result !== null);
 
     if (completedResults.length === 0) return null;
-    if (completedResults.length === 1) return completedResults[0].interpretation;
 
-    return completedResults
-      .map(result => `${result.label}: ${result.interpretation}`)
-      .join('\n\n');
+    const finalVerdict = this.joinSummaryText(completedResults.map(result => result.finalVerdict));
+    const finalizedAnswer = this.joinSummaryText(completedResults.map(result => result.finalizedAnswer));
+    const summaryParts = [
+      finalVerdict ? `Final verdict: ${finalVerdict}` : '',
+      finalizedAnswer ? `Finalized answer: ${finalizedAnswer}` : '',
+    ].filter(Boolean);
+
+    return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
   });
 
   ngOnInit(): void {
@@ -90,15 +106,42 @@ export class ResultsComponent implements OnInit {
     const readings = s.oracleReadings;
 
     this.isLoading.set(true);
+    this.finalResult.set(null);
     this.apiResults.set(new Array(readings.length).fill(null));
     this.apiErrors.set(new Array(readings.length).fill(null));
 
     let completed = 0;
+    const totalRequests = readings.length + 1;
 
     const finish = () => {
       completed++;
-      if (completed >= readings.length) this.isLoading.set(false);
+      if (completed >= totalRequests) this.isLoading.set(false);
     };
+
+    this.readingApiService
+      .submitFinalSummary({
+        question: s.question,
+        fileContent: s.fileContent,
+        readings: readings.map(reading => ({
+          system: reading.system,
+          spreadType: reading.spreadLabel ?? reading.spreadType,
+          cards: reading.drawnCards.map(dc => ({
+            id: dc.card.id,
+            name: dc.card.name,
+            position: dc.positionLabel,
+            isReversed: dc.isReversed,
+          })),
+        })),
+      })
+      .subscribe({
+        next: result => {
+          this.finalResult.set(result);
+          finish();
+        },
+        error: () => {
+          finish();
+        },
+      });
 
     readings.forEach((reading, index) => {
       this.readingApiService
@@ -138,6 +181,26 @@ export class ResultsComponent implements OnInit {
 
   getCardInsight(oracleIndex: number, cardId: number): string | null {
     return this.apiResults()[oracleIndex]?.cardInsights?.find(i => i.cardId === cardId)?.insight ?? null;
+  }
+
+  private finalVerdictText(result: ApiReadingResponse | null | undefined): string {
+    return (result?.finalVerdict ?? result?.final_verdict ?? '').trim();
+  }
+
+  private finalizedAnswerText(result: ApiReadingResponse | null | undefined): string {
+    return (result?.finalized_answer ?? result?.interpretation ?? '').trim();
+  }
+
+  private joinSummaryText(values: string[]): string {
+    return values.map(value => value.trim()).filter(Boolean).join(' ');
+  }
+
+  hasMethodSummaries(oracleIndex: number): boolean {
+    return (this.apiResults()[oracleIndex]?.methodSummaries?.length ?? 0) > 0;
+  }
+
+  isOraclePending(oracleIndex: number): boolean {
+    return !this.apiResults()[oracleIndex] && !this.apiErrors()[oracleIndex];
   }
 
   displaySpreadLabel(reading: OracleReading): string {

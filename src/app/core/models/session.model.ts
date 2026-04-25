@@ -62,12 +62,36 @@ export interface ApiReadingRequest {
   }>;
 }
 
+export interface ApiCombinedReadingRequest {
+  question: string;
+  fileContent?: string;
+  readings: Array<{
+    system: DivinationSystem;
+    spreadType: string;
+    cards: Array<{
+      id: number;
+      name: string;
+      position: string;
+      isReversed: boolean;
+    }>;
+  }>;
+}
+
 export interface CardInsight {
   cardId: number;
   insight: string;
 }
 
+export interface MethodSummary {
+  method: string;
+  summary: string;
+}
+
 export interface ApiReadingResponse {
   interpretation: string;
+  finalized_answer?: string;
+  finalVerdict?: string;
+  final_verdict?: string;
+  methodSummaries?: MethodSummary[];
   cardInsights: CardInsight[];
 }
