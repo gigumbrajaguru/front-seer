@@ -4,6 +4,8 @@ import { SpreadType } from './spread.model';
 export interface OracleReading {
   system: DivinationSystem;
   spreadType: SpreadType;
+  spreadLabel?: string;
+  positionLabels?: string[];
   customCount?: number;
   drawnCards: DrawnCard[];
 }
@@ -13,10 +15,38 @@ export type ReadingStep = 'question' | 'oracle-selection' | 'spread-selection' |
 export interface ReadingSession {
   question: string;
   fileContent?: string;
+  spreadSuggestions?: ApiSpreadSuggestionResponse;
+  spreadSuggestionError?: string;
   step: ReadingStep;
   selectedOracles: DivinationSystem[];
   oracleReadings: OracleReading[];
   currentOracleIndex: number;
+}
+
+export interface ApiSpreadSuggestionRequest {
+  question: string;
+  fileContent?: string;
+}
+
+export interface ApiSpreadPosition {
+  name: string;
+  meaning: string;
+}
+
+export interface ApiSpreadSuggestion {
+  spread: string;
+  positions: ApiSpreadPosition[];
+  element_count: number;
+}
+
+export interface ApiSuggestedMethod {
+  method: string;
+  spreads: ApiSpreadSuggestion[];
+}
+
+export interface ApiSpreadSuggestionResponse {
+  question: string;
+  methods: ApiSuggestedMethod[];
 }
 
 export interface ApiReadingRequest {
