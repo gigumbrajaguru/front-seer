@@ -13,7 +13,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ReadingApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiBaseUrl;
+  private readonly baseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
 
   /** Requests interpretation for one oracle method and its selected cards. */
   submitReading(request: ApiReadingRequest): Observable<ApiReadingResponse> {
