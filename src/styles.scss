@@ -1,1 +1,144 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+  --font-body: 'Manrope', 'Segoe UI', sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --bg-page: #f6f2ea;
+  --bg-page-deep: #ece5d9;
+  --bg-panel: rgba(255, 255, 255, 0.84);
+  --bg-panel-strong: rgba(255, 255, 255, 0.96);
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-card-strong: #ffffff;
+  --text-primary: #101010;
+  --text-secondary: #322f2b;
+  --text-dim: #726b62;
+  --accent-gold: #9e7430;
+  --accent-gold-soft: rgba(158, 116, 48, 0.1);
+  --accent-rose: #b97867;
+  --accent-iris: #7e87bb;
+  --accent-aqua: #6d9a96;
+  --border-soft: rgba(16, 16, 16, 0.09);
+  --border-strong: rgba(16, 16, 16, 0.18);
+  --shadow-soft: 0 18px 50px rgba(30, 23, 11, 0.08);
+  --shadow-panel: 0 28px 70px rgba(30, 23, 11, 0.12);
+  --shadow-glow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at top left, rgba(126, 135, 187, 0.07), transparent 26%),
+    radial-gradient(circle at 12% 18%, rgba(185, 120, 103, 0.07), transparent 30%),
+    radial-gradient(circle at 88% 12%, rgba(109, 154, 150, 0.06), transparent 22%),
+    linear-gradient(180deg, var(--bg-page) 0%, #f5f1e9 46%, #efe7da 100%);
+  overflow-x: hidden;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(16, 16, 16, 0.9);
+  color: #f7f2ea;
+}
+
+::-webkit-scrollbar {
+  width: 0.8rem;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(16, 16, 16, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(16, 16, 16, 0.45), rgba(158, 116, 48, 0.35));
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes shimmer-sweep {
+  from {
+    transform: translateX(-160%) skewX(-24deg);
+  }
+
+  to {
+    transform: translateX(220%) skewX(-24deg);
+  }
+}
+
+@keyframes breathe-glow {
+  0%,
+  100% {
+    box-shadow: var(--shadow-soft);
+  }
+
+  50% {
+    box-shadow: var(--shadow-soft), 0 0 24px rgba(158, 116, 48, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

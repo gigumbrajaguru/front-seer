@@ -4,17 +4,55 @@
 }
 
 .app-shell {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+
+  &::before,
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  &::before {
+    background:
+      radial-gradient(circle at 12% 18%, rgba(185, 120, 103, 0.08), transparent 20%),
+      radial-gradient(circle at 82% 12%, rgba(126, 135, 187, 0.08), transparent 22%),
+      radial-gradient(circle at 52% 100%, rgba(109, 154, 150, 0.06), transparent 28%);
+    filter: blur(18px);
+  }
+
+  &::after {
+    opacity: 0.12;
+    background-image:
+      linear-gradient(rgba(16, 16, 16, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(16, 16, 16, 0.04) 1px, transparent 1px);
+    background-size: 120px 120px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 90%);
+  }
 }
 
 .site-footer {
   margin-top: auto;
-  padding: 0.85rem 1rem 1.1rem;
-  background: rgba(6, 6, 16, 0.92);
-  border-top: 1px solid rgba(212, 175, 106, 0.18);
-  backdrop-filter: blur(6px);
+  position: relative;
+  padding: 1rem 1rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(246, 242, 234, 0.94));
+  border-top: 1px solid var(--border-soft);
+  backdrop-filter: blur(14px);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(16, 16, 16, 0.32), rgba(158, 116, 48, 0.24), transparent);
+  }
 }
 
 .footer-inner {
@@ -27,9 +65,10 @@
 }
 
 .brand {
-  color: #9b8ea0;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
 }
 
 .footer-links {
@@ -39,12 +78,15 @@
   gap: 0.9rem;
 
   a {
-    color: #d4af6a;
+    color: var(--text-primary);
     text-decoration: none;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    transition: color 0.2s ease, transform 0.2s ease;
 
     &:hover {
-      text-decoration: underline;
+      color: var(--accent-gold);
+      transform: translateY(-1px);
     }
   }
 }

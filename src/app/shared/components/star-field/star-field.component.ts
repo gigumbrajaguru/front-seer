@@ -36,13 +36,13 @@ export class StarFieldComponent implements OnInit {
 
   /** Generates random star positions and animation timings for the background. */
   ngOnInit(): void {
-    this.stars = Array.from({ length: 180 }, () => ({
+    this.stars = Array.from({ length: 220 }, () => ({
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
-      size: `${1 + Math.random() * 2.5}px`,
-      opacity: 0.3 + Math.random() * 0.7,
-      duration: `${2 + Math.random() * 4}s`,
-      delay: `${Math.random() * 4}s`
+      size: `${0.8 + Math.random() * 2.6}px`,
+      opacity: 0.25 + Math.random() * 0.65,
+      duration: `${2.2 + Math.random() * 4.8}s`,
+      delay: `${Math.random() * 5}s`
     }));
   }
 }

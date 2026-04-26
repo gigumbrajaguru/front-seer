@@ -31,10 +31,12 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       gap: 0.6rem;
       max-width: min(280px, 45vw);
-      padding: 0.4rem 0.75rem 0.4rem 0.4rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(212, 175, 106, 0.25);
-      border-radius: 2rem;
+      padding: 0.45rem 0.8rem 0.45rem 0.45rem;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(16, 16, 16, 0.08);
+      border-radius: 999px;
+      box-shadow: 0 12px 24px rgba(30, 23, 11, 0.08);
+      backdrop-filter: blur(14px);
     }
 
     .user-avatar {
@@ -42,7 +44,7 @@ import { AuthService } from '../../../core/services/auth.service';
       height: 2rem;
       border-radius: 50%;
       object-fit: cover;
-      border: 1px solid rgba(212, 175, 106, 0.4);
+      border: 1px solid rgba(16, 16, 16, 0.1);
     }
 
     .user-info {
@@ -55,7 +57,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .user-name {
       font-size: 0.82rem;
-      color: #d4af6a;
+      color: var(--text-primary);
       font-weight: 600;
       letter-spacing: 0.04em;
       overflow: hidden;
@@ -65,7 +67,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .user-email {
       font-size: 0.68rem;
-      color: #9b8ea0;
+      color: var(--text-dim);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -74,7 +76,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .logout-btn {
       background: transparent;
       border: none;
-      color: #9b8ea0;
+      color: var(--text-dim);
       cursor: pointer;
       font-size: 0.75rem;
       padding: 0.2rem;
@@ -82,7 +84,7 @@ import { AuthService } from '../../../core/services/auth.service';
       transition: color 0.2s;
 
       &:hover {
-        color: #e8e0d0;
+        color: #fff6e7;
       }
     }
   `]
