@@ -1,11 +1,12 @@
 <div class="spread-selector">
   <h3 class="selector-label">Spread Type</h3>
   <div class="spreads-row">
-    @for (spread of spreads; track spread.key) {
+    @for (spread of spreads; track spread.key; let itemIndex = $index) {
       <button
         class="spread-btn"
         [class.active]="selected() === spread.key"
         [class.suggested]="isSuggested(spread.key)"
+        [style.--item-index]="itemIndex"
         (click)="select(spread.key)"
         [attr.aria-pressed]="selected() === spread.key"
         [attr.title]="isSuggested(spread.key) ? suggestionLabel(spread.key) : null"

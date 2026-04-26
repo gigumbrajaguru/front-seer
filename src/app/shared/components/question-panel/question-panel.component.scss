@@ -1,76 +1,88 @@
 .question-panel {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .panel-header {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.1rem;
 
   h3 {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.22em;
     color: var(--text-dim);
     margin: 0;
   }
 }
 
 .required-tag {
-  font-size: 0.65rem;
-  color: var(--accent-gold);
-  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  color: var(--text-primary);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 16, 16, 0.08);
+  background: rgba(16, 16, 16, 0.04);
 }
 
 .upload-hint {
-  margin: 0.45rem 0 0;
-  font-size: 0.78rem;
+  margin: 0;
+  font-size: 0.82rem;
   color: var(--text-dim);
 }
 
 .question-input {
   width: 100%;
-  background: var(--bg-card);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 0.5rem;
+  min-height: 9.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 237, 0.98));
+  border: 1px solid rgba(16, 16, 16, 0.1);
+  border-radius: 1rem;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.9rem;
-  padding: 0.75rem 1rem;
+  font-size: 0.96rem;
+  line-height: 1.7;
+  padding: 1rem 1.1rem;
   resize: vertical;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   box-sizing: border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
   &::placeholder {
     color: var(--text-dim);
-    opacity: 0.5;
+    opacity: 0.72;
   }
 
   &:focus {
     outline: none;
-    border-color: var(--accent-gold);
-    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 4px rgba(16, 16, 16, 0.06), 0 16px 30px rgba(30, 23, 11, 0.08);
+    transform: translateY(-1px);
   }
 }
 
 .upload-zone {
-  margin-top: 0.75rem;
-  border: 1px dashed rgba(212, 175, 55, 0.25);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  transition: all 0.2s;
+  margin-top: 0.1rem;
+  border: 1px dashed rgba(16, 16, 16, 0.16);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   position: relative;
   cursor: pointer;
+  background: rgba(16, 16, 16, 0.03);
 
   &.drag-over {
-    border-color: var(--accent-gold);
-    background: rgba(212, 175, 55, 0.05);
+    border-color: var(--text-primary);
+    background: rgba(16, 16, 16, 0.05);
+    transform: translateY(-2px);
   }
 
   &:hover {
-    border-color: rgba(212, 175, 55, 0.4);
+    border-color: rgba(16, 16, 16, 0.24);
   }
 }
 
@@ -79,13 +91,17 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: var(--text-dim);
-  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
 
-  .upload-icon { font-size: 1.1rem; }
+  .upload-icon {
+    font-size: 1.15rem;
+  }
+
   .browse-link {
-    color: var(--accent-gold);
+    color: var(--text-primary);
     text-decoration: underline;
+    text-underline-offset: 0.18rem;
   }
 }
 
@@ -101,12 +117,20 @@
 .file-loaded {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--accent-gold);
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--text-primary);
 
-  .file-icon { font-size: 1.1rem; }
-  .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-icon {
+    font-size: 1.1rem;
+  }
+
+  .file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .clear-file {
@@ -115,13 +139,17 @@
   cursor: pointer;
   color: var(--text-dim);
   font-size: 1rem;
-  padding: 0.1rem 0.3rem;
+  padding: 0.2rem 0.35rem;
+  transition: color 0.2s ease, transform 0.2s ease;
 
-  &:hover { color: var(--text-primary); }
+  &:hover {
+    color: var(--text-primary);
+    transform: scale(1.08);
+  }
 }
 
 .file-error {
   margin-top: 0.4rem;
   font-size: 0.8rem;
-  color: #e05c5c;
+  color: #f194a1;
 }

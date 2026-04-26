@@ -4,7 +4,7 @@
   <header class="page-header aurora-panel">
     <div class="header-copy">
       <p class="eyebrow">Mystical guidance</p>
-      <h1 class="title">✦ Seer. ✦</h1>
+      <h1 class="title">Seer.</h1>
       <p class="subtitle">Consult the Oracle</p>
       <p class="site-note">A modern mystical guidance space for multi-oracle readings, reflection, and clarity.</p>
     </div>
@@ -93,7 +93,7 @@
 
       <div class="spread-grid">
         @for (reading of session().oracleReadings; track $index; let oracleIndex = $index) {
-          <div class="oracle-spread-block">
+          <div class="oracle-spread-block" [style.--block-index]="oracleIndex">
             <div class="oracle-spread-header">
               <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
               <span class="oracle-name">{{ systemLabels[reading.system] }}</span>
@@ -122,7 +122,7 @@
       <h2 class="section-heading">Draw Cards for All Oracles</h2>
 
       @for (oracle of session().oracleReadings; track $index; let oracleIndex = $index) {
-        <div class="oracle-drawing-block">
+        <div class="oracle-drawing-block" [style.--block-index]="oracleIndex">
           <div class="cards-header">
             <div class="cards-header-info">
               <h2>
@@ -148,12 +148,13 @@
               </span>
             </div>
 
-            <div class="deck-grid">
+            <div class="deck-grid" [class.reshuffling]="isDeckShuffling(oracleIndex)">
               @for (item of shuffledDeck(oracleIndex); track $index; let cardIndex = $index) {
                 <button
                   class="deck-card"
                   [class.selected]="isCardSelected(oracleIndex, cardIndex)"
                   [class.disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
+                  [style.--card-index]="cardIndex"
                   (click)="toggleCardSelection(oracleIndex, cardIndex)"
                   [disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
                 >
@@ -179,8 +180,8 @@
 
           @if (hasConfirmedCards(oracleIndex)) {
             <div class="cards-grid" [attr.data-count]="oracle.drawnCards.length">
-              @for (drawn of oracle.drawnCards; track $index) {
-                <div class="card-slot revealed">
+              @for (drawn of oracle.drawnCards; track $index; let revealIndex = $index) {
+                <div class="card-slot revealed" [style.--reveal-index]="revealIndex">
                   <p class="position-label">{{ drawn.positionLabel }}</p>
                   <div class="card-face">
                     <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>

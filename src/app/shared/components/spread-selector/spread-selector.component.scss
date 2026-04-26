@@ -1,106 +1,127 @@
 .spread-selector {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
 .selector-label {
-  font-size: 0.8rem;
+  margin: 0;
+  font-size: 0.76rem;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.22em;
   color: var(--text-dim);
-  margin-bottom: 0.75rem;
 }
 
 .spreads-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
 }
 
 .spread-btn {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.6rem 1rem;
-  background: var(--bg-card);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 0.5rem;
+  justify-content: center;
+  gap: 0.32rem;
+  min-height: 6.8rem;
+  padding: 1rem 0.8rem 0.85rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 241, 233, 0.98));
+  border: 1px solid rgba(16, 16, 16, 0.09);
+  border-radius: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--text-dim);
-  min-width: 80px;
-  position: relative;
+  color: var(--text-secondary);
+  animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--item-index, 0) * 50ms) both;
+  transition:
+    transform 0.24s ease,
+    border-color 0.24s ease,
+    color 0.24s ease,
+    box-shadow 0.24s ease,
+    background 0.24s ease;
 
   &:hover {
-    border-color: var(--accent-gold);
+    border-color: rgba(16, 16, 16, 0.22);
     color: var(--text-primary);
-    transform: translateY(-1px);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 32px rgba(30, 23, 11, 0.09);
   }
 
   &.active {
-    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(123,45,139,0.15));
-    border-color: var(--accent-gold);
-    color: var(--accent-gold);
-    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+    background: linear-gradient(180deg, #ffffff, #efe8dc);
+    border-color: rgba(16, 16, 16, 0.22);
+    color: var(--text-primary);
+    box-shadow: 0 20px 32px rgba(30, 23, 11, 0.09);
   }
 
   &.suggested:not(.active) {
-    border-color: rgba(212, 175, 55, 0.65);
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(255, 255, 255, 0.04));
+    border-color: rgba(16, 16, 16, 0.16);
+    background: linear-gradient(180deg, #fffefb, #f2ece3);
   }
 }
 
 .spread-count {
-  font-size: 1.2rem;
+  font-size: 1.7rem;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: var(--font-display);
+  line-height: 1;
 }
 
 .spread-name {
-  font-size: 0.7rem;
-  white-space: nowrap;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-align: center;
 }
 
 .custom-count {
   margin-top: 0.75rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(16, 16, 16, 0.08);
+  border-radius: 1rem;
+  background: rgba(16, 16, 16, 0.03);
 
   label {
     font-size: 0.85rem;
-    color: var(--text-dim);
+    color: var(--text-secondary);
   }
 
   input {
-    width: 64px;
-    padding: 0.35rem 0.5rem;
-    background: var(--bg-card);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 0.35rem;
+    width: 72px;
+    padding: 0.45rem 0.6rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(16, 16, 16, 0.12);
+    border-radius: 0.7rem;
     color: var(--text-primary);
     font-size: 1rem;
     text-align: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
     &:focus {
       outline: none;
-      border-color: var(--accent-gold);
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 4px rgba(16, 16, 16, 0.06);
     }
   }
 }
 
 .suggestion-mark {
   position: absolute;
-  top: -0.45rem;
+  top: 0.75rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #d4af37;
-  color: #151019;
+  background: rgba(16, 16, 16, 0.05);
+  color: var(--text-primary);
+  border: 1px solid rgba(16, 16, 16, 0.08);
   border-radius: 999px;
-  padding: 0.1rem 0.45rem;
+  padding: 0.18rem 0.5rem;
   font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
 }

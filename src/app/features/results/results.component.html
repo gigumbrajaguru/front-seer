@@ -2,7 +2,7 @@
 
 <main class="results-page">
   <header class="page-header">
-    <h1 class="title">✦ Your Reading ✦</h1>
+    <h1 class="title">Your Reading</h1>
     @if (session().question) {
       <p class="question-display">"{{ session().question }}"</p>
     }
@@ -26,7 +26,7 @@
   }
 
   @for (reading of session().oracleReadings; track $index; let oracleIndex = $index) {
-    <section class="oracle-section">
+    <section class="oracle-section" [style.--oracle-index]="oracleIndex">
       <div class="oracle-section-header">
         <span class="oracle-icon">{{ systemIcons[reading.system] }}</span>
         <div class="oracle-section-title">
@@ -63,8 +63,8 @@
       }
 
       <div class="cards-list">
-        @for (drawn of reading.drawnCards; track $index) {
-          <div class="result-card">
+        @for (drawn of reading.drawnCards; track $index; let cardIndex = $index) {
+          <div class="result-card" [style.--card-index]="cardIndex">
             <div class="card-header">
               <span class="card-symbol">{{ drawn.card.symbol ?? '✦' }}</span>
               <div class="card-title-group">

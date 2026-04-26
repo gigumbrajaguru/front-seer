@@ -55,27 +55,29 @@ declare global {
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
-      padding: 1.25rem;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(212, 175, 106, 0.2);
-      border-radius: 0.9rem;
+      gap: 0.7rem;
+      padding: 1.35rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 246, 239, 0.98));
+      border: 1px solid rgba(16, 16, 16, 0.08);
+      border-radius: 1.1rem;
+      box-shadow: 0 16px 30px rgba(30, 23, 11, 0.08);
     }
 
     .login-title {
       margin: 0;
-      color: #d4af6a;
+      color: var(--text-primary);
       text-align: center;
-      font-size: 1rem;
-      letter-spacing: 0.08em;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
     .login-subtitle {
       margin: 0;
       text-align: center;
-      color: #b9aec2;
-      font-size: 0.86rem;
+      color: var(--text-secondary);
+      font-size: 0.88rem;
     }
 
     .oauth-section {
@@ -101,13 +103,19 @@ declare global {
     }
 
     .social-btn {
-      border: 1px solid rgba(212, 175, 106, 0.26);
-      border-radius: 0.6rem;
-      background: rgba(255, 255, 255, 0.03);
-      color: #e8e0d0;
+      border: 1px solid rgba(16, 16, 16, 0.1);
+      border-radius: 0.8rem;
+      background: rgba(16, 16, 16, 0.03);
+      color: var(--text-primary);
       font-size: 0.88rem;
-      padding: 0.55rem 0.7rem;
+      padding: 0.7rem 0.8rem;
       cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 22px rgba(30, 23, 11, 0.08);
+      }
 
       &:disabled {
         opacity: 0.45;
@@ -121,7 +129,7 @@ declare global {
 
     .oauth-note {
       margin: 0;
-      color: #b9aec2;
+      color: var(--text-dim);
       font-size: 0.78rem;
       text-align: center;
     }

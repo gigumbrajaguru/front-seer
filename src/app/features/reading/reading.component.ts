@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -41,6 +41,7 @@ export class ReadingComponent {
   private readonly divinationService = inject(DivinationService);
   private readonly readingApiService = inject(ReadingApiService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly authService = inject(AuthService);
 
   readonly session = this.readingService.session;
@@ -49,6 +50,8 @@ export class ReadingComponent {
   // Local state for card selection phase per oracle index
   readonly shuffledDecks = signal<Record<number, ShuffledCard[]>>({});
   readonly selectedIndicesByOracle = signal<Record<number, number[]>>({});
+  readonly shufflingDecks = signal<Record<number, boolean>>({});
+  private readonly shuffleTimers = new Map<number, number>();
 
   /** True when every selected oracle has confirmed drawn cards. */
   readonly allOraclesReady = computed(() =>
@@ -110,6 +113,10 @@ export class ReadingComponent {
 
   /** Initializes per-oracle shuffled decks when the flow enters the drawing step. */
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.shuffleTimers.forEach(timerId => window.clearTimeout(timerId));
+    });
+
     effect(() => {
       const step = this.session().step;
       const readings = this.session().oracleReadings;
@@ -226,6 +233,11 @@ export class ReadingComponent {
     return this.shuffledDecks()[index] ?? [];
   }
 
+  /** Whether the deck at the given index is currently playing the reshuffle animation. */
+  isDeckShuffling(index: number): boolean {
+    return !!this.shufflingDecks()[index];
+  }
+
   /** Selects or deselects one card while respecting the required count. */
   toggleCardSelection(oracleIndex: number, cardIndex: number): void {
     const currentMap = { ...this.selectedIndicesByOracle() };
@@ -271,6 +283,7 @@ export class ReadingComponent {
     const oracle = this.session().oracleReadings[index];
     if (!oracle) return;
 
+    this.triggerDeckShuffle(index);
     const decks = { ...this.shuffledDecks() };
     const selections = { ...this.selectedIndicesByOracle() };
     decks[index] = this.divinationService.getShuffledDeck(oracle.system);
@@ -371,5 +384,26 @@ export class ReadingComponent {
   /** Normalizes text before matching method or spread names. */
   private normalizeText(value: string): string {
     return value.trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  /** Temporarily flags a deck so CSS can replay the shuffle wave animation. */
+  private triggerDeckShuffle(index: number): void {
+    this.shufflingDecks.update(current => ({ ...current, [index]: true }));
+
+    const previousTimer = this.shuffleTimers.get(index);
+    if (previousTimer) {
+      window.clearTimeout(previousTimer);
+    }
+
+    const timerId = window.setTimeout(() => {
+      this.shufflingDecks.update(current => {
+        const next = { ...current };
+        delete next[index];
+        return next;
+      });
+      this.shuffleTimers.delete(index);
+    }, 700);
+
+    this.shuffleTimers.set(index, timerId);
   }
 }

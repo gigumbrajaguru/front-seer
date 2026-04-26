@@ -50,19 +50,20 @@ import { RouterLink } from '@angular/router';
     .legal-page {
       width: min(860px, 100% - 2rem);
       margin: 2rem auto;
-      padding: 1.5rem;
-      border-radius: 1rem;
-      background: rgba(12, 12, 24, 0.9);
-      border: 1px solid rgba(212, 175, 106, 0.22);
-      color: #ddd6e9;
+      padding: 1.75rem;
+      border-radius: 1.25rem;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(16, 16, 16, 0.08);
+      color: #1b1814;
+      box-shadow: 0 18px 36px rgba(30, 23, 11, 0.08);
       line-height: 1.75;
     }
-    .eyebrow { margin: 0; color: #9b8ea0; text-transform: uppercase; letter-spacing: .12em; font-size: .74rem; }
-    h1 { color: #d4af6a; margin: .2rem 0 .1rem; }
-    .effective { margin: 0 0 1rem; color: #b9aec2; font-size: .9rem; }
-    h2 { color: #e6d2a2; font-size: 1rem; margin: 1rem 0 .3rem; }
+    .eyebrow { margin: 0; color: #726b62; text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; }
+    h1 { color: #101010; margin: .2rem 0 .1rem; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.4rem; }
+    .effective { margin: 0 0 1rem; color: #726b62; font-size: .9rem; }
+    h2 { color: #101010; font-size: 1rem; margin: 1rem 0 .3rem; }
     p { margin: 0; }
-    a { color: #d4af6a; }
+    a { color: #101010; }
     .back-link { display: inline-block; margin-top: 1.2rem; }
   `],
 })

@@ -2,11 +2,12 @@
   <h3 class="selector-label">Choose Your Oracles</h3>
   <p class="selector-hint">Select one or more oracles to consult</p>
   <div class="systems-grid">
-    @for (sys of systems; track sys.key) {
+    @for (sys of systems; track sys.key; let itemIndex = $index) {
       <button
         class="system-btn"
         [class.active]="isSelected(sys.key)"
         [class.suggested]="isSuggested(sys.key)"
+        [style.--item-index]="itemIndex"
         (click)="toggle(sys.key)"
         [attr.aria-pressed]="isSelected(sys.key)"
         [attr.title]="isSuggested(sys.key) ? suggestionLabel(sys.key) : null"
