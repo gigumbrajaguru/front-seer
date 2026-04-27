@@ -3,10 +3,10 @@
 <main class="reading-page">
   <header class="page-header aurora-panel">
     <div class="header-copy">
-      <p class="eyebrow">Mystical guidance</p>
+      <p class="eyebrow">Private reading flow</p>
       <h1 class="title">Seer.</h1>
-      <p class="subtitle">Consult the Oracle</p>
-      <p class="site-note">A modern mystical guidance space for multi-oracle readings, reflection, and clarity.</p>
+      <p class="subtitle">{{ authService.currentUser() ? 'Shape the reading, then submit' : 'Sign in, shape the reading, then submit' }}</p>
+      <p class="site-note">Nothing is sent to the server until you press <strong>Get Your Reading</strong>. You can go back and change your question, methods, spreads, and card picks before that point.</p>
     </div>
 
     @if (authService.currentUser()) {
@@ -16,31 +16,52 @@
     }
   </header>
 
-  <div class="step-indicator aurora-panel">
-    <div class="step" [class.active]="session().step === 'question'" [class.done]="session().step !== 'question'">
-      <span class="step-num">1</span>
-      <span class="step-name">Question</span>
-    </div>
-    <div class="step-line"></div>
-    <div class="step" [class.active]="session().step === 'oracle-selection'" [class.done]="session().step === 'spread-selection' || session().step === 'drawing'">
-      <span class="step-num">2</span>
-      <span class="step-name">Oracles</span>
-    </div>
-    <div class="step-line"></div>
-    <div class="step" [class.active]="session().step === 'spread-selection'" [class.done]="session().step === 'drawing'">
-      <span class="step-num">3</span>
-      <span class="step-name">Spreads</span>
-    </div>
-    <div class="step-line"></div>
-    <div class="step" [class.active]="session().step === 'drawing'">
-      <span class="step-num">4</span>
-      <span class="step-name">Reading</span>
-    </div>
+  <div class="step-indicator aurora-panel" aria-label="Reading progress">
+    @for (flowStep of flowSteps(); track flowStep.key; let stepNumber = $index; let isLast = $last) {
+      <button
+        type="button"
+        class="step"
+        [class.active]="session().step === flowStep.key"
+        [class.done]="isStepDone(flowStep.key)"
+        [class.clickable]="canNavigateBackToStep(flowStep.key)"
+        [attr.aria-current]="session().step === flowStep.key ? 'step' : null"
+        [attr.aria-disabled]="!canNavigateBackToStep(flowStep.key)"
+        (click)="goToIndicatorStep(flowStep.key)"
+      >
+        <span class="step-num">{{ stepNumber + 1 }}</span>
+        <span class="step-name">{{ flowStep.label }}</span>
+      </button>
+
+      @if (!isLast) {
+        <div class="step-line" aria-hidden="true"></div>
+      }
+    }
   </div>
+
+  @if (session().step === 'auth') {
+    <section class="setup-section aurora-panel auth-step-section">
+      <div class="section-copy">
+        <p class="section-kicker">Step {{ displayStepNumber('auth') }}</p>
+        <h2 class="section-heading section-heading--left">Sign in before asking your question</h2>
+        <p class="section-description">Start with login or sign-up first, then your reading flow opens and stays editable until the final submit.</p>
+      </div>
+
+      <div class="auth-center">
+        <app-google-login />
+      </div>
+    </section>
+  }
 
   @if (session().step === 'question') {
     <section class="setup-section aurora-panel">
+      <div class="section-copy">
+        <p class="section-kicker">Step {{ displayStepNumber('question') }}</p>
+        <h2 class="section-heading section-heading--left">Ask the question first</h2>
+        <p class="section-description">Write the situation clearly. Seer will suggest methods next, but you can still override them later.</p>
+      </div>
+
       <app-question-panel />
+
       <div class="draw-section">
         <button
           type="button"
@@ -49,7 +70,7 @@
           [disabled]="!session().question.trim() || isSuggestingSpreads()"
         >
           <span class="btn-icon">✦</span>
-          {{ isSuggestingSpreads() ? 'Analyzing question…' : 'Ask the Oracle' }}
+          {{ isSuggestingSpreads() ? 'Analyzing question…' : 'Continue to Methods' }}
         </button>
       </div>
     </section>
@@ -57,39 +78,70 @@
 
   @if (session().step === 'oracle-selection') {
     <section class="setup-section aurora-panel">
-      @if (!authService.currentUser()) {
-        <div class="auth-center">
-          <app-google-login />
+      <div class="section-copy">
+        <p class="section-kicker">Step {{ displayStepNumber('oracle-selection') }}</p>
+        <h2 class="section-heading section-heading--left">Choose or change your methods</h2>
+        <p class="section-description">Suggested methods are only a starting point. Add, remove, or swap any oracle before continuing.</p>
+      </div>
+
+      @if (session().spreadSuggestionError) {
+        <div class="support-note support-note--error">
+          <p>{{ session().spreadSuggestionError }}</p>
+          <button type="button" class="btn-ghost" (click)="retryAiSuggestions()" [disabled]="isSuggestingSpreads()">
+            {{ isSuggestingSpreads() ? 'Retrying AI…' : 'Retry AI Suggestions' }}
+          </button>
         </div>
-      } @else {
-        <app-system-selector
-          [selectedSystems]="session().selectedOracles"
-          [suggestedSystems]="suggestedSystems()"
-          [suggestionLabels]="suggestionLabelsBySystem()"
-          (systemToggled)="toggleOracle($event)"
-        />
-        <div class="draw-section">
+      } @else if (hasQuestionSuggestions()) {
+        <p class="support-note">Suggestions are shown below, but you can change the method selection freely.</p>
+      }
+
+      <app-system-selector
+        [selectedSystems]="session().selectedOracles"
+        [suggestedSystems]="suggestedSystems()"
+        [suggestionLabels]="suggestionLabelsBySystem()"
+        (systemToggled)="toggleOracle($event)"
+      />
+
+      <div class="workflow-actions">
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">Back to Question</button>
+
+        <div class="workflow-actions-main">
           @if (session().selectedOracles.length > 0) {
             <p class="selection-count">
               {{ session().selectedOracles.length }} oracle{{ session().selectedOracles.length > 1 ? 's' : '' }} selected
             </p>
           }
           <button
+            type="button"
             class="btn-draw"
             (click)="submitOracles()"
             [disabled]="session().selectedOracles.length === 0"
           >
             <span class="btn-icon">✦</span>
-            Continue with {{ session().selectedOracles.length > 0 ? session().selectedOracles.length : '' }} Oracle{{ session().selectedOracles.length !== 1 ? 's' : '' }}
+            Continue to Spreads
           </button>
         </div>
-      }
+      </div>
     </section>
   }
 
   @if (session().step === 'spread-selection') {
     <section class="setup-section aurora-panel">
-      <h2 class="section-heading">Choose a Spread for Each Oracle</h2>
+      <div class="section-copy">
+        <p class="section-kicker">Step {{ displayStepNumber('spread-selection') }}</p>
+        <h2 class="section-heading section-heading--left">Choose a spread for each oracle</h2>
+        <p class="section-description">You can still return to the question or method step from here if the setup needs to change.</p>
+      </div>
+
+      <div class="step-edit-row">
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">Edit Question</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Change Methods</button>
+      </div>
+
+      <div class="summary-chip">
+        <span class="summary-chip-label">Question</span>
+        <span class="summary-chip-text">{{ session().question }}</span>
+      </div>
 
       <div class="spread-grid">
         @for (reading of session().oracleReadings; track $index; let oracleIndex = $index) {
@@ -109,17 +161,37 @@
         }
       </div>
 
-      <div class="draw-section">
-        <button type="button" class="btn-draw" (click)="submitSpreads()">
-          <span class="btn-icon">✦</span> Begin Reading
-        </button>
+      <div class="workflow-actions">
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Back to Methods</button>
+
+        <div class="workflow-actions-main">
+          <button type="button" class="btn-draw" (click)="submitSpreads()">
+            <span class="btn-icon">✦</span>
+            Continue to Card Picks
+          </button>
+        </div>
       </div>
     </section>
   }
 
   @if (session().step === 'drawing') {
     <section class="cards-section aurora-panel">
-      <h2 class="section-heading">Draw Cards for All Oracles</h2>
+      <div class="section-copy">
+        <p class="section-kicker">Step {{ displayStepNumber('drawing') }}</p>
+        <h2 class="section-heading section-heading--left">Review every card before submission</h2>
+        <p class="section-description">This is still local. Go back and revise the question, methods, or spreads before sending anything to the server.</p>
+      </div>
+
+      <div class="step-edit-row">
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">Edit Question</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Change Methods</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">Change Spreads</button>
+      </div>
+
+      <div class="summary-chip">
+        <span class="summary-chip-label">Question</span>
+        <span class="summary-chip-text">{{ session().question }}</span>
+      </div>
 
       @for (oracle of session().oracleReadings; track $index; let oracleIndex = $index) {
         <div class="oracle-drawing-block" [style.--block-index]="oracleIndex">
@@ -151,6 +223,7 @@
             <div class="deck-grid" [class.reshuffling]="isDeckShuffling(oracleIndex)">
               @for (item of shuffledDeck(oracleIndex); track $index; let cardIndex = $index) {
                 <button
+                  type="button"
                   class="deck-card"
                   [class.selected]="isCardSelected(oracleIndex, cardIndex)"
                   [class.disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
@@ -169,11 +242,13 @@
 
             <div class="action-row">
               <button
+                type="button"
                 class="btn-draw"
                 (click)="confirmSelection(oracleIndex)"
                 [disabled]="!selectionComplete(oracleIndex)"
               >
-                <span class="btn-icon">✦</span> Confirm {{ systemLabels[oracle.system] }}
+                <span class="btn-icon">✦</span>
+                Confirm {{ systemLabels[oracle.system] }}
               </button>
             </div>
           }
@@ -205,10 +280,16 @@
         </div>
       }
 
-      <div class="action-row">
-        <button type="button" class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
-          <span class="btn-icon">🌟</span> Get Your Reading
-        </button>
+      <div class="workflow-actions">
+        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">Back to Spreads</button>
+
+        <div class="workflow-actions-main">
+          <p class="submit-note">Server submission starts only when you press this final button.</p>
+          <button type="button" class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
+            <span class="btn-icon">🌟</span>
+            Get Your Reading
+          </button>
+        </div>
       </div>
     </section>
   }

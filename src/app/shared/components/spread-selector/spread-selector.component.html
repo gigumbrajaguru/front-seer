@@ -1,5 +1,9 @@
 <div class="spread-selector">
   <h3 class="selector-label">Spread Type</h3>
+  <div class="selector-legend" aria-hidden="true">
+    <span class="legend-chip selected">Selected</span>
+    <span class="legend-chip suggested">Suggested</span>
+  </div>
   <div class="spreads-row">
     @for (spread of spreads; track spread.key; let itemIndex = $index) {
       <button

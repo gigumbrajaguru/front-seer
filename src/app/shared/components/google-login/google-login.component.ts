@@ -22,8 +22,8 @@ declare global {
   standalone: true,
   template: `
     <div class="inline-login-card">
-      <p class="login-title">Sign in</p>
-      <p class="login-subtitle">Choose your account provider.</p>
+      <p class="login-title">Sign in or create your account</p>
+      <p class="login-subtitle">Choose a provider to start your reading flow.</p>
 
       <div class="oauth-section">
         <div #googleBtn class="google-btn-container"></div>

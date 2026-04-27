@@ -1,6 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReadingService } from '../../../core/services/reading.service';
 
 @Component({
   selector: 'app-user-badge',
@@ -91,9 +93,13 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class UserBadgeComponent {
   readonly authService = inject(AuthService);
+  private readonly readingService = inject(ReadingService);
+  private readonly router = inject(Router);
 
-  /** Signs out the current user from the local frontend session. */
+  /** Signs out, clears the active reading flow, and returns to the start of the app. */
   logout(): void {
     this.authService.logout();
+    this.readingService.reset();
+    void this.router.navigate(['/']);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, NgZone, signal } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 export interface GoogleUser {
   name: string;
@@ -9,6 +10,7 @@ export interface GoogleUser {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly USER_KEY = 'seer_user';
+  private readonly apiBaseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
 
   readonly currentUser = signal<GoogleUser | null>(this.loadUser());
 
@@ -51,6 +53,8 @@ export class AuthService {
 
   /** Clears the current user session and persisted auth data. */
   logout(): void {
+    const user = this.currentUser();
+    this.notifyServerLogout(user);
     this.currentUser.set(null);
     localStorage.removeItem(this.USER_KEY);
   }
@@ -61,6 +65,27 @@ export class AuthService {
       this.currentUser.set(user);
       localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     });
+  }
+
+  /** Sends a best-effort logout signal to the API host so the server can observe sign-outs. */
+  private notifyServerLogout(user: GoogleUser | null): void {
+    if (!user) return;
+
+    const params = new URLSearchParams({
+      event: 'logout',
+      email: user.email,
+      name: user.name,
+      source: 'frontend',
+      timestamp: new Date().toISOString(),
+    });
+
+    void fetch(`${this.apiBaseUrl}/?${params.toString()}`, {
+      method: 'GET',
+      keepalive: true,
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+    }).catch(() => undefined);
   }
 
   /** Decodes the Google JWT payload fields needed by the UI. */

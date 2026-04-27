@@ -22,6 +22,13 @@ export class QuestionPanelComponent {
   fileError = '';
   isDragOver = false;
 
+  /** Restores in-progress question and uploaded filename when returning to this step. */
+  constructor() {
+    const session = this.readingService.session();
+    this.question = session.question;
+    this.fileName = session.fileName ?? '';
+  }
+
   /** Persists question text in the shared reading session as the user types. */
   onQuestionChange(): void {
     this.readingService.setQuestion(this.question);
@@ -60,7 +67,7 @@ export class QuestionPanelComponent {
     try {
       const content = await this.fileUploadService.readTextFile(file);
       this.fileName = file.name;
-      this.readingService.setFileContent(content);
+      this.readingService.setFileContent(content, file.name);
     } catch (err: any) {
       this.fileError = err.message ?? 'Failed to read file';
     }
@@ -69,6 +76,6 @@ export class QuestionPanelComponent {
   /** Removes uploaded context from the current reading session. */
   clearFile(): void {
     this.fileName = '';
-    this.readingService.setFileContent('');
+    this.readingService.setFileContent('', undefined);
   }
 }

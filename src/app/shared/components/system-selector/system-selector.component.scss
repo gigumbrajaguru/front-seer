@@ -18,6 +18,41 @@
   color: var(--text-secondary);
 }
 
+.selector-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.8rem;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.9rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(16, 16, 16, 0.12);
+  color: var(--text-primary);
+  background: rgba(16, 16, 16, 0.03);
+
+  &.selected {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: #fff;
+  }
+
+  &.suggested {
+    background: rgba(158, 116, 48, 0.08);
+    border-color: rgba(158, 116, 48, 0.26);
+    color: var(--accent-gold);
+  }
+}
+
 .systems-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -65,10 +100,18 @@
   }
 
   &.active {
-    background: linear-gradient(180deg, #ffffff, #efe9de);
-    border-color: rgba(16, 16, 16, 0.22);
-    color: var(--text-primary);
-    box-shadow: 0 22px 34px rgba(30, 23, 11, 0.1);
+    background: linear-gradient(180deg, #101010, #24211c);
+    border-color: #101010;
+    color: #fff;
+    box-shadow: 0 24px 36px rgba(16, 16, 16, 0.18);
+
+    .sys-name {
+      color: #fff;
+    }
+
+    .sys-count {
+      color: rgba(255, 255, 255, 0.72);
+    }
 
     .check-mark {
       opacity: 1;
@@ -77,8 +120,14 @@
   }
 
   &.suggested:not(.active) {
-    border-color: rgba(16, 16, 16, 0.16);
-    background: linear-gradient(180deg, #fffefb, #f2ece3);
+    border-color: rgba(158, 116, 48, 0.28);
+    background: linear-gradient(180deg, #fffefb, #f4ece1);
+    box-shadow: 0 0 0 1px rgba(158, 116, 48, 0.08), 0 16px 28px rgba(30, 23, 11, 0.08);
+  }
+
+  &.active.suggested {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 2px rgba(158, 116, 48, 0.18), 0 24px 36px rgba(16, 16, 16, 0.18);
   }
 }
 
@@ -128,9 +177,9 @@
   top: 0.75rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(16, 16, 16, 0.05);
-  color: var(--text-primary);
-  border: 1px solid rgba(16, 16, 16, 0.08);
+  background: rgba(158, 116, 48, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(158, 116, 48, 0.22);
   border-radius: 999px;
   padding: 0.18rem 0.52rem;
   font-size: 0.54rem;
