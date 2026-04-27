@@ -1,7 +1,7 @@
 import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, retry, timer } from 'rxjs';
 import { ReadingService } from '../../core/services/reading.service';
 import { DivinationService, ShuffledCard } from '../../core/services/divination.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,9 +12,15 @@ import { QuestionPanelComponent } from '../../shared/components/question-panel/q
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
 import { GoogleLoginComponent } from '../../shared/components/google-login/google-login.component';
 import { UserBadgeComponent } from '../../shared/components/user-badge/user-badge.component';
-import { SpreadType } from '../../core/models/spread.model';
+import { SPREAD_CONFIGS, SpreadType } from '../../core/models/spread.model';
 import { DivinationSystem } from '../../core/models/card.model';
-import { ApiSpreadSuggestion, OracleReading } from '../../core/models/session.model';
+import {
+  ApiSpreadPosition,
+  ApiSpreadSuggestion,
+  ApiSpreadSuggestionResponse,
+  OracleReading,
+  ReadingStep
+} from '../../core/models/session.model';
 
 interface SuggestedSpreadSelection {
   type: SpreadType;
@@ -46,6 +52,22 @@ export class ReadingComponent {
 
   readonly session = this.readingService.session;
   readonly isSuggestingSpreads = signal(false);
+  readonly flowSteps = computed<Array<{ key: ReadingStep; label: string }>>(() =>
+    this.authService.currentUser()
+      ? [
+          { key: 'question', label: 'Question' },
+          { key: 'oracle-selection', label: 'Methods' },
+          { key: 'spread-selection', label: 'Spreads' },
+          { key: 'drawing', label: 'Review' },
+        ]
+      : [
+          { key: 'auth', label: 'Sign in' },
+          { key: 'question', label: 'Question' },
+          { key: 'oracle-selection', label: 'Methods' },
+          { key: 'spread-selection', label: 'Spreads' },
+          { key: 'drawing', label: 'Review' },
+        ]
+  );
 
   // Local state for card selection phase per oracle index
   readonly shuffledDecks = signal<Record<number, ShuffledCard[]>>({});
@@ -57,6 +79,11 @@ export class ReadingComponent {
   readonly allOraclesReady = computed(() =>
     this.session().oracleReadings.length > 0 &&
     this.session().oracleReadings.every(oracle => oracle.drawnCards.length > 0)
+  );
+
+  /** Whether question suggestions are available or manual selection fallback is active. */
+  readonly hasQuestionSuggestions = computed(() =>
+    (this.session().spreadSuggestions?.methods.length ?? 0) > 0 || !!this.session().spreadSuggestionError
   );
 
   /** Converts AI-suggested method names into selectable frontend systems. */
@@ -152,8 +179,18 @@ export class ReadingComponent {
 
   /** Requests spread suggestions for the current question and advances the flow. */
   submitQuestion(): void {
-    if (!this.session().question.trim()) return;
+    if (!this.authService.currentUser() || !this.session().question.trim()) return;
+    this.requestSpreadSuggestions(true);
+  }
 
+  /** Re-runs the AI suggestion request when the user wants live recommendations instead of fallback ones. */
+  retryAiSuggestions(): void {
+    if (!this.authService.currentUser() || !this.session().question.trim() || this.isSuggestingSpreads()) return;
+    this.requestSpreadSuggestions(false);
+  }
+
+  /** Fetches AI suggestions with retry before falling back to local guidance. */
+  private requestSpreadSuggestions(advanceToMethodStep: boolean): void {
     const { question, fileContent } = this.session();
     this.isSuggestingSpreads.set(true);
     this.readingService.clearSpreadSuggestions();
@@ -163,16 +200,36 @@ export class ReadingComponent {
         question: question.trim(),
         fileContent,
       })
-      .pipe(finalize(() => this.isSuggestingSpreads.set(false)))
+      .pipe(
+        retry({
+          count: 2,
+          delay: (_error, retryCount) => timer(Math.min(retryCount * 1500, 3000)),
+        }),
+        finalize(() => this.isSuggestingSpreads.set(false))
+      )
       .subscribe({
         next: suggestions => {
-          this.readingService.setSpreadSuggestions(suggestions);
-          this.readingService.submitQuestion();
+          if ((suggestions.methods?.length ?? 0) > 0) {
+            this.readingService.setSpreadSuggestions(suggestions);
+          } else {
+            this.readingService.setSpreadSuggestionFallback(
+              this.buildFallbackSuggestions(question.trim(), fileContent),
+              'AI service returned no method suggestions. Local suggestions are shown below.'
+            );
+          }
+          if (advanceToMethodStep) {
+            this.readingService.submitQuestion();
+          }
         },
         error: err => {
-          const message = err?.error?.detail ?? 'Spread suggestions unavailable. Choose manually.';
-          this.readingService.setSpreadSuggestionError(message);
-          this.readingService.submitQuestion();
+          const message = err?.error?.detail ?? 'AI service unavailable. Local suggestions are shown below.';
+          this.readingService.setSpreadSuggestionFallback(
+            this.buildFallbackSuggestions(question.trim(), fileContent),
+            message
+          );
+          if (advanceToMethodStep) {
+            this.readingService.submitQuestion();
+          }
         },
       });
   }
@@ -185,6 +242,7 @@ export class ReadingComponent {
   /** Confirms selected oracle systems and moves to spread selection. */
   submitOracles(): void {
     if (this.session().selectedOracles.length === 0) return;
+    this.resetDeckDraftState();
     this.readingService.submitOracleSelection();
   }
 
@@ -203,7 +261,37 @@ export class ReadingComponent {
 
   /** Confirms spread choices and moves to card drawing. */
   submitSpreads(): void {
+    this.resetDeckDraftState();
     this.readingService.submitSpreadSelection();
+  }
+
+  /** Whether a previous step can be reopened from the current position. */
+  canNavigateBackToStep(step: ReadingStep): boolean {
+    if (step === 'auth') return false;
+    return this.stepIndex(step) < this.stepIndex(this.session().step);
+  }
+
+  /** Moves back to an earlier step so the user can revise the flow before submission. */
+  goToStep(step: Exclude<ReadingStep, 'auth'>): void {
+    if (!this.canNavigateBackToStep(step)) return;
+    this.resetDeckDraftState();
+    this.readingService.goToStep(step);
+  }
+
+  /** Handles step-indicator clicks without exposing auth as a direct navigation target. */
+  goToIndicatorStep(step: ReadingStep): void {
+    if (step === 'auth') return;
+    this.goToStep(step);
+  }
+
+  /** Whether a step sits before the current step in the flow indicator. */
+  isStepDone(step: ReadingStep): boolean {
+    return this.stepIndex(step) < this.stepIndex(this.session().step);
+  }
+
+  /** Returns the visible 1-based step number for the current auth-aware flow. */
+  displayStepNumber(step: ReadingStep): number {
+    return this.stepIndex(step) + 1;
   }
 
   /** Returns the number of cards the oracle at the given index needs. */
@@ -386,6 +474,85 @@ export class ReadingComponent {
     return value.trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
+  /** Builds local method/spread guidance so the setup stays useful when the AI endpoint is unavailable. */
+  private buildFallbackSuggestions(question: string, fileContent?: string): ApiSpreadSuggestionResponse {
+    const sourceText = this.normalizeText(`${question} ${fileContent ?? ''}`);
+
+    const relationshipQuestion = /(love|relationship|partner|romance|dating|marriage|boyfriend|girlfriend|husband|wife|ex\b|crush)/.test(sourceText);
+    const careerQuestion = /(career|job|work|business|money|finance|promotion|salary|boss|project)/.test(sourceText);
+    const decisionQuestion = /(should i|which|decision|choose|choice|option|path|stay|leave|move)/.test(sourceText);
+    const spiritualQuestion = /(purpose|spiritual|soul|lesson|intuition|energy|healing|shadow|why am i)/.test(sourceText);
+
+    let methods: Array<{ method: string; spreads: SpreadType[] }>;
+
+    if (relationshipQuestion) {
+      methods = [
+        { method: 'Tarot', spreads: ['three-card', 'horseshoe'] },
+        { method: 'Lenormand', spreads: ['three-card', 'single'] },
+        { method: 'Sibilla', spreads: ['single', 'three-card'] },
+      ];
+    } else if (careerQuestion) {
+      methods = [
+        { method: 'Tarot', spreads: ['three-card', 'horseshoe'] },
+        { method: 'Kipper', spreads: ['three-card', 'horseshoe'] },
+        { method: 'Playing Cards', spreads: ['single', 'three-card'] },
+      ];
+    } else if (decisionQuestion) {
+      methods = [
+        { method: 'Tarot', spreads: ['horseshoe', 'three-card'] },
+        { method: 'I Ching', spreads: ['single', 'three-card'] },
+        { method: 'Runes', spreads: ['single', 'three-card'] },
+      ];
+    } else if (spiritualQuestion) {
+      methods = [
+        { method: 'Tarot', spreads: ['three-card', 'celtic-cross'] },
+        { method: 'Runes', spreads: ['single', 'three-card'] },
+        { method: 'Oracle', spreads: ['single', 'three-card'] },
+      ];
+    } else {
+      methods = [
+        { method: 'Tarot', spreads: ['three-card', 'horseshoe'] },
+        { method: 'Lenormand', spreads: ['single', 'three-card'] },
+        { method: 'Oracle', spreads: ['single', 'three-card'] },
+      ];
+    }
+
+    return {
+      question,
+      methods: methods.map(entry => ({
+        method: entry.method,
+        spreads: entry.spreads.map(spreadType => this.createSpreadSuggestion(spreadType)),
+      })),
+    };
+  }
+
+  /** Converts a supported frontend spread into the API suggestion shape consumed by the UI. */
+  private createSpreadSuggestion(spreadType: SpreadType): ApiSpreadSuggestion {
+    const config = SPREAD_CONFIGS[spreadType];
+    const displayNameByType: Record<SpreadType, string> = {
+      'single': 'Single Card',
+      'three-card': 'Three-Card Snapshot',
+      'horseshoe': 'Horseshoe',
+      'celtic-cross': 'Celtic Cross',
+      'custom': 'Custom',
+    };
+    const positions: ApiSpreadPosition[] = config.positions.map(position => ({
+      name: position,
+      meaning: `${position} focus`,
+    }));
+
+    return {
+      spread: displayNameByType[spreadType],
+      positions,
+      element_count: spreadType === 'custom' ? positions.length || 1 : config.count,
+    };
+  }
+
+  /** Returns a flow step's index for comparisons in the indicator and back navigation. */
+  private stepIndex(step: ReadingStep): number {
+    return this.flowSteps().findIndex(flowStep => flowStep.key === step);
+  }
+
   /** Temporarily flags a deck so CSS can replay the shuffle wave animation. */
   private triggerDeckShuffle(index: number): void {
     this.shufflingDecks.update(current => ({ ...current, [index]: true }));
@@ -405,5 +572,14 @@ export class ReadingComponent {
     }, 700);
 
     this.shuffleTimers.set(index, timerId);
+  }
+
+  /** Clears local deck state whenever the user navigates backward and edits the flow. */
+  private resetDeckDraftState(): void {
+    this.shuffledDecks.set({});
+    this.selectedIndicesByOracle.set({});
+    this.shufflingDecks.set({});
+    this.shuffleTimers.forEach(timerId => window.clearTimeout(timerId));
+    this.shuffleTimers.clear();
   }
 }

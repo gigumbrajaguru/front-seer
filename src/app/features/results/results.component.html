@@ -11,10 +11,31 @@
     </p>
   </header>
 
-  @if (isLoading()) {
+  @if (showOverviewLoading()) {
     <div class="loading-state">
-      <span class="loading-symbol">✦</span>
-      <p>Consulting the oracles…</p>
+      <span class="loading-orbit" aria-hidden="true">
+        <span class="loading-orbit-core"></span>
+      </span>
+      <p class="loading-title">Preparing your reading</p>
+      <p class="loading-copy">Interpreting your selected methods and assembling the final summary.</p>
+      <div class="loading-methods" aria-label="Method loading progress">
+        @for (reading of session().oracleReadings; track reading.system; let oracleIndex = $index) {
+          <div
+            class="loading-method-card"
+            [class.ready]="!!apiResults()[oracleIndex]"
+            [class.fallback]="!!apiErrors()[oracleIndex]"
+          >
+            <span class="loading-method-icon">{{ systemIcons[reading.system] }}</span>
+            <div class="loading-method-copy">
+              <span class="loading-method-name">{{ systemLabels[reading.system] }}</span>
+              <span class="loading-method-status">{{ loadingLabelForOracle(oracleIndex) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <p class="loading-progress-caption">
+        {{ completedMethodCount() }} / {{ session().oracleReadings.length }} method{{ session().oracleReadings.length !== 1 ? 's' : '' }} ready
+      </p>
     </div>
   }
 
@@ -57,8 +78,11 @@
         </div>
       } @else {
         <div class="section-loading">
-          <span class="mini-loader"></span>
-          <p>Waiting for this oracle interpretation…</p>
+          <span class="mini-loader" aria-hidden="true"></span>
+          <div class="loading-lines" aria-label="Loading interpretation">
+            <span class="loading-line loading-line--short"></span>
+            <span class="loading-line"></span>
+          </div>
         </div>
       }
 
@@ -93,8 +117,11 @@
               </div>
             } @else {
               <div class="card-loading">
-                <span class="mini-loader"></span>
-                <p>Waiting for pick interpretation…</p>
+                <span class="mini-loader" aria-hidden="true"></span>
+                <div class="loading-lines" aria-label="Loading card insight">
+                  <span class="loading-line loading-line--short"></span>
+                  <span class="loading-line"></span>
+                </div>
               </div>
             }
 

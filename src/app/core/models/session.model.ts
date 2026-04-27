@@ -10,14 +10,16 @@ export interface OracleReading {
   drawnCards: DrawnCard[];
 }
 
-export type ReadingStep = 'question' | 'oracle-selection' | 'spread-selection' | 'drawing';
+export type ReadingStep = 'auth' | 'question' | 'oracle-selection' | 'spread-selection' | 'drawing';
 
 export interface ReadingSession {
   question: string;
   fileContent?: string;
+  fileName?: string;
   spreadSuggestions?: ApiSpreadSuggestionResponse;
   spreadSuggestionError?: string;
   step: ReadingStep;
+  resumeStep?: Exclude<ReadingStep, 'auth'>;
   selectedOracles: DivinationSystem[];
   oracleReadings: OracleReading[];
   currentOracleIndex: number;

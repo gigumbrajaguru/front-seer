@@ -24,6 +24,10 @@ export class ResultsComponent implements OnInit {
   readonly finalResult = signal<ApiReadingResponse | null>(null);
   readonly apiResults = signal<(ApiReadingResponse | null)[]>([]);
   readonly apiErrors = signal<(string | null)[]>([]);
+  readonly showOverviewLoading = computed(() => this.isLoading() && !this.finalResult());
+  readonly completedMethodCount = computed(() =>
+    this.apiResults().filter(result => !!result).length + this.apiErrors().filter(error => !!error).length
+  );
 
   readonly systemLabels: Record<DivinationSystem, string> = {
     'tarot': 'Tarot',
@@ -55,8 +59,6 @@ export class ResultsComponent implements OnInit {
 
   /** Builds the top finalized summary from the combined backend result or fallback text. */
   readonly finalSummary = computed(() => {
-    if (this.isLoading()) return null;
-
     // Prefer the backend's combined summary so the top section is one answer for all methods.
     const finalResult = this.finalResult();
     if (finalResult) {
@@ -67,6 +69,8 @@ export class ResultsComponent implements OnInit {
 
       return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
     }
+
+    if (this.isLoading()) return null;
 
     const completedResults = this.apiResults()
       .map(result => {
@@ -213,6 +217,13 @@ export class ResultsComponent implements OnInit {
   /** Whether the given oracle is still waiting for either a result or an error. */
   isOraclePending(oracleIndex: number): boolean {
     return !this.apiResults()[oracleIndex] && !this.apiErrors()[oracleIndex];
+  }
+
+  /** Returns the loading label shown in the overview loader for one oracle method. */
+  loadingLabelForOracle(oracleIndex: number): string {
+    if (this.apiResults()[oracleIndex]) return 'Ready';
+    if (this.apiErrors()[oracleIndex]) return 'Fallback ready';
+    return 'Reading…';
   }
 
   /** Returns the spread label selected or suggested for display. */
