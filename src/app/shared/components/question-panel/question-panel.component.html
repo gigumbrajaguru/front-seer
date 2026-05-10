@@ -1,19 +1,19 @@
 <div class="question-panel">
   <div class="panel-header">
-    <h3>Your Question</h3>
+    <h3>Your Question for the Oracle</h3>
     <span class="required-tag">required</span>
   </div>
 
   <textarea
     class="question-input"
-    placeholder="What guidance do you seek? Enter your question to begin your reading..."
+    placeholder="What weighs on your mind — love, purpose, a crossroads, a fear? Speak it plainly and the oracle listens..."
     [(ngModel)]="question"
     (ngModelChange)="onQuestionChange()"
     rows="3"
     maxlength="1000"
   ></textarea>
 
-  <p class="upload-hint">Optional: upload a .txt file for additional context.</p>
+  <p class="upload-hint">Add a journal entry, letter, or background — the oracle absorbs what you share.</p>
 
   <div class="upload-zone"
     [class.drag-over]="isDragOver"
@@ -24,7 +24,7 @@
     @if (!fileName) {
       <label class="upload-label" for="file-input">
         <span class="upload-icon">📄</span>
-        <span>Drop a .txt file or <span class="browse-link">browse</span></span>
+        <span>Drop a .txt file here or <span class="browse-link">browse</span></span>
       </label>
       <input
         id="file-input"

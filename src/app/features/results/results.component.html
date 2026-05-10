@@ -2,7 +2,7 @@
 
 <main class="results-page">
   <header class="page-header">
-    <h1 class="title">Your Reading</h1>
+    <h1 class="title">The Oracle Speaks</h1>
     @if (session().question) {
       <p class="question-display">"{{ session().question }}"</p>
     }
@@ -16,8 +16,8 @@
       <span class="loading-orbit" aria-hidden="true">
         <span class="loading-orbit-core"></span>
       </span>
-      <p class="loading-title">Preparing your reading</p>
-      <p class="loading-copy">Interpreting your selected methods and assembling the final summary.</p>
+      <p class="loading-title">The oracle is reading the cards</p>
+      <p class="loading-copy">Ancient wisdom is being drawn from your chosen oracles. This may take a moment — the unseen does not rush.</p>
       <div class="loading-methods" aria-label="Method loading progress">
         @for (reading of session().oracleReadings; track reading.system; let oracleIndex = $index) {
           <div
@@ -41,7 +41,7 @@
 
   @if (finalSummary(); as summary) {
     <section class="final-summary">
-      <h2 class="section-title">Finalized Summary</h2>
+      <h2 class="section-title">The Oracle's Verdict</h2>
       <p class="summary-text">{{ summary }}</p>
     </section>
   }
@@ -58,7 +58,7 @@
 
       @if (apiResults()[oracleIndex]; as result) {
         <div class="interpretation-block">
-          <h3 class="block-label">Question Answer</h3>
+          <h3 class="block-label">Reading</h3>
           <p class="interpretation-text">{{ result.interpretation }}</p>
         </div>
         @if (hasMethodSummaries(oracleIndex)) {
@@ -102,12 +102,12 @@
 
             @if (getCardInsight(oracleIndex, drawn.card.id); as insight) {
               <div class="card-insight-block">
-                <span class="insight-label">Pick Interpretation</span>
+                <span class="insight-label">Card Insight</span>
                 <p class="card-insight">{{ insight }}</p>
               </div>
             } @else if (apiResults()[oracleIndex]) {
               <div class="card-insight-block missing">
-                <span class="insight-label">Pick Interpretation</span>
+                <span class="insight-label">Card Insight</span>
                 <p class="card-insight">No AI interpretation was returned for this pick.</p>
               </div>
             } @else if (apiErrors()[oracleIndex]) {
@@ -139,6 +139,6 @@
   }
 
   <div class="action-row">
-    <button class="btn-new" (click)="newReading()">✦ New Reading</button>
+    <button class="btn-new" (click)="newReading()">✦ Ask Another Question</button>
   </div>
 </main>

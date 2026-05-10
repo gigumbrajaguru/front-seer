@@ -3,10 +3,10 @@
 <main class="reading-page">
   <header class="page-header aurora-panel">
     <div class="header-copy">
-      <p class="eyebrow">Private reading flow</p>
+      <p class="eyebrow">Your personal reading</p>
       <h1 class="title">Seer.</h1>
-      <p class="subtitle">{{ authService.currentUser() ? 'Shape the reading, then submit' : 'Sign in, shape the reading, then submit' }}</p>
-      <p class="site-note">Nothing is sent to the server until you press <strong>Get Your Reading</strong>. You can go back and change your question, methods, spreads, and card picks before that point.</p>
+      <p class="subtitle">{{ authService.currentUser() ? 'Shape your reading — the oracle waits in silence until you command it' : 'Sign in to begin — your reading stays yours until you choose to reveal it' }}</p>
+      <p class="site-note">Your question, cards, and choices remain entirely private until you press <strong>Get Your Reading</strong>. Reshape anything — question, methods, spreads, picks — before the oracle speaks.</p>
     </div>
 
     @if (authService.currentUser()) {
@@ -42,8 +42,8 @@
     <section class="setup-section aurora-panel auth-step-section">
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('auth') }}</p>
-        <h2 class="section-heading section-heading--left">Sign in before asking your question</h2>
-        <p class="section-description">Start with login or sign-up first, then your reading flow opens and stays editable until the final submit.</p>
+        <h2 class="section-heading section-heading--left">Unlock your reading</h2>
+        <p class="section-description">A moment of sign-in opens the full reading flow. Everything you shape here stays private until you choose to receive your answer.</p>
       </div>
 
       <div class="auth-center">
@@ -56,8 +56,8 @@
     <section class="setup-section aurora-panel">
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('question') }}</p>
-        <h2 class="section-heading section-heading--left">Ask the question first</h2>
-        <p class="section-description">Write the situation clearly. Seer will suggest methods next, but you can still override them later.</p>
+        <h2 class="section-heading section-heading--left">Speak your question to the oracle</h2>
+        <p class="section-description">The clearer your intention, the sharper the guidance. Seer reads the energy of your question and recommends the right divination path.</p>
       </div>
 
       <app-question-panel />
@@ -80,8 +80,8 @@
     <section class="setup-section aurora-panel">
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('oracle-selection') }}</p>
-        <h2 class="section-heading section-heading--left">Choose or change your methods</h2>
-        <p class="section-description">Suggested methods are only a starting point. Add, remove, or swap any oracle before continuing.</p>
+        <h2 class="section-heading section-heading--left">Choose which voices to consult</h2>
+        <p class="section-description">Each oracle carries its own ancient wisdom. Seer has sensed which traditions suit your question — trust your instinct to add, remove, or change them.</p>
       </div>
 
       @if (session().spreadSuggestionError) {
@@ -92,7 +92,7 @@
           </button>
         </div>
       } @else if (hasQuestionSuggestions()) {
-        <p class="support-note">Suggestions are shown below, but you can change the method selection freely.</p>
+        <p class="support-note">The oracle senses these methods suit your question. Adjust freely — the final choice is always yours.</p>
       }
 
       <app-system-selector
@@ -129,8 +129,8 @@
     <section class="setup-section aurora-panel">
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('spread-selection') }}</p>
-        <h2 class="section-heading section-heading--left">Choose a spread for each oracle</h2>
-        <p class="section-description">You can still return to the question or method step from here if the setup needs to change.</p>
+        <h2 class="section-heading section-heading--left">Define how the cards fall</h2>
+        <p class="section-description">Each spread is a lens — wider formations reveal hidden layers, a single card cuts straight to the core. Go back and reshape anything before drawing.</p>
       </div>
 
       <div class="step-edit-row">
@@ -178,8 +178,8 @@
     <section class="cards-section aurora-panel">
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('drawing') }}</p>
-        <h2 class="section-heading section-heading--left">Review every card before submission</h2>
-        <p class="section-description">This is still local. Go back and revise the question, methods, or spreads before sending anything to the server.</p>
+        <h2 class="section-heading section-heading--left">Draw your cards — feel the pull</h2>
+        <p class="section-description">Trust your instinct as you choose. Everything is still yours to change — question, methods, spreads — until you command the oracle to speak.</p>
       </div>
 
       <div class="step-edit-row">
@@ -213,7 +213,7 @@
           @if (!hasConfirmedCards(oracleIndex)) {
             <div class="selection-header">
               <p class="selection-instruction">
-                Choose <strong>{{ requiredCountFor(oracleIndex) }}</strong> card{{ requiredCountFor(oracleIndex) !== 1 ? 's' : '' }} from the shuffled deck
+                Let <strong>{{ requiredCountFor(oracleIndex) }}</strong> card{{ requiredCountFor(oracleIndex) !== 1 ? 's' : '' }} choose you from the shuffled deck
               </p>
               <span class="selection-progress" [class.complete]="selectionComplete(oracleIndex)">
                 {{ selectedIndices(oracleIndex).length }} / {{ requiredCountFor(oracleIndex) }} selected
@@ -284,10 +284,10 @@
         <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">Back to Spreads</button>
 
         <div class="workflow-actions-main">
-          <p class="submit-note">Server submission starts only when you press this final button.</p>
+          <p class="submit-note">When every card is set, the oracle is ready. Your reading is sealed in this moment.</p>
           <button type="button" class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
             <span class="btn-icon">🌟</span>
-            Get Your Reading
+            Reveal My Reading
           </button>
         </div>
       </div>

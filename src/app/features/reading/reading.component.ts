@@ -21,11 +21,7 @@ import {
   OracleReading,
   ReadingStep
 } from '../../core/models/session.model';
-
-interface SuggestedSpreadSelection {
-  type: SpreadType;
-  customCount?: number;
-}
+import { SYSTEM_ICONS, SYSTEM_LABELS } from '../../core/models/oracle.constants';
 
 @Component({
   selector: 'app-reading',
@@ -110,33 +106,8 @@ export class ReadingComponent {
     return labels;
   });
 
-  readonly systemLabels: Record<DivinationSystem, string> = {
-    'tarot': 'Tarot',
-    'lenormand': 'Lenormand',
-    'runes': 'Runes',
-    'iching': 'I Ching',
-    'belline': 'Belline',
-    'playing-cards': 'Playing Cards',
-    'kipper': 'Kipper',
-    'sibilla': 'Sibilla',
-    'oracle-marseille': 'Oracle Marseille',
-    'oracle-etteilla': 'Oracle Etteilla',
-    'oracle-generic': 'Oracle Generic',
-  };
-
-  readonly systemIcons: Record<DivinationSystem, string> = {
-    'tarot': '🌟',
-    'lenormand': '🍀',
-    'runes': 'ᚠ',
-    'iching': '䷀',
-    'belline': '🔮',
-    'playing-cards': '♠',
-    'kipper': '🪄',
-    'sibilla': '🌙',
-    'oracle-marseille': '☀️',
-    'oracle-etteilla': '⚜️',
-    'oracle-generic': '✨',
-  };
+  readonly systemLabels = SYSTEM_LABELS;
+  readonly systemIcons = SYSTEM_ICONS;
 
   /** Initializes per-oracle shuffled decks when the flow enters the drawing step. */
   constructor() {
@@ -389,9 +360,12 @@ export class ReadingComponent {
     this.reshuffleDeck(index);
   }
 
+  private _isProceeding = false;
+
   /** Navigates to the results route where AI interpretation requests are made. */
   proceed(): void {
-    // The "Get Your Reading" action moves into the route that performs AI requests.
+    if (this._isProceeding) return;
+    this._isProceeding = true;
     this.router.navigate(['/results']);
   }
 
@@ -448,7 +422,7 @@ export class ReadingComponent {
   }
 
   /** Converts one AI spread suggestion into the closest supported frontend spread type. */
-  private spreadSelectionFromSuggestion(suggestion: ApiSpreadSuggestion): SuggestedSpreadSelection {
+  private spreadSelectionFromSuggestion(suggestion: ApiSpreadSuggestion): { type: SpreadType; customCount?: number } {
     const normalized = this.normalizeText(suggestion.spread);
     const count = Number(suggestion.element_count) || suggestion.positions.length || undefined;
 

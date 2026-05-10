@@ -4,8 +4,15 @@ import { Router } from '@angular/router';
 import { ReadingService } from '../../core/services/reading.service';
 import { ReadingApiService } from '../../core/services/reading-api.service';
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
-import { ApiReadingResponse, OracleReading } from '../../core/models/session.model';
-import { DivinationSystem } from '../../core/models/card.model';
+import {
+  ApiReadingResponse,
+  CardInsight,
+  FinalSummaryMethod,
+  FinalSummaryResponse,
+  OracleReading,
+} from '../../core/models/session.model';
+import { DivinationSystem, DrawnCard } from '../../core/models/card.model';
+import { SYSTEM_ICONS, SYSTEM_LABELS } from '../../core/models/oracle.constants';
 
 @Component({
   selector: 'app-results',
@@ -20,8 +27,9 @@ export class ResultsComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly session = this.readingService.session;
+  private _fetchStarted = false;
   readonly isLoading = signal(false);
-  readonly finalResult = signal<ApiReadingResponse | null>(null);
+  readonly finalResult = signal<FinalSummaryResponse | null>(null);
   readonly apiResults = signal<(ApiReadingResponse | null)[]>([]);
   readonly apiErrors = signal<(string | null)[]>([]);
   readonly showOverviewLoading = computed(() => this.isLoading() && !this.finalResult());
@@ -29,73 +37,14 @@ export class ResultsComponent implements OnInit {
     this.apiResults().filter(result => !!result).length + this.apiErrors().filter(error => !!error).length
   );
 
-  readonly systemLabels: Record<DivinationSystem, string> = {
-    'tarot': 'Tarot',
-    'lenormand': 'Lenormand',
-    'runes': 'Runes',
-    'iching': 'I Ching',
-    'belline': 'Belline',
-    'playing-cards': 'Playing Cards',
-    'kipper': 'Kipper',
-    'sibilla': 'Sibilla',
-    'oracle-marseille': 'Oracle Marseille',
-    'oracle-etteilla': 'Oracle Etteilla',
-    'oracle-generic': 'Oracle Generic',
-  };
+  readonly systemLabels = SYSTEM_LABELS;
+  readonly systemIcons = SYSTEM_ICONS;
 
-  readonly systemIcons: Record<DivinationSystem, string> = {
-    'tarot': '🌟',
-    'lenormand': '🍀',
-    'runes': 'ᚠ',
-    'iching': '䷀',
-    'belline': '🔮',
-    'playing-cards': '♠',
-    'kipper': '🪄',
-    'sibilla': '🌙',
-    'oracle-marseille': '☀️',
-    'oracle-etteilla': '⚜️',
-    'oracle-generic': '✨',
-  };
-
-  /** Builds the top finalized summary from the combined backend result or fallback text. */
+  /** Builds the top finalized summary from the combined backend result. */
   readonly finalSummary = computed(() => {
-    // Prefer the backend's combined summary so the top section is one answer for all methods.
     const finalResult = this.finalResult();
-    if (finalResult) {
-      const summaryParts = [
-        this.finalVerdictText(finalResult) ? `Final verdict: ${this.finalVerdictText(finalResult)}` : '',
-        this.finalizedAnswerText(finalResult) ? `Finalized answer: ${this.finalizedAnswerText(finalResult)}` : '',
-      ].filter(Boolean);
-
-      return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
-    }
-
-    if (this.isLoading()) return null;
-
-    const completedResults = this.apiResults()
-      .map(result => {
-        return result
-          ? {
-              finalVerdict: this.finalVerdictText(result),
-              finalizedAnswer: this.finalizedAnswerText(result),
-            }
-          : null;
-      })
-      .filter((result): result is {
-        finalVerdict: string;
-        finalizedAnswer: string;
-      } => result !== null);
-
-    if (completedResults.length === 0) return null;
-
-    const finalVerdict = this.joinSummaryText(completedResults.map(result => result.finalVerdict));
-    const finalizedAnswer = this.joinSummaryText(completedResults.map(result => result.finalizedAnswer));
-    const summaryParts = [
-      finalVerdict ? `Final verdict: ${finalVerdict}` : '',
-      finalizedAnswer ? `Finalized answer: ${finalizedAnswer}` : '',
-    ].filter(Boolean);
-
-    return summaryParts.length > 0 ? summaryParts.join('\n\n') : null;
+    if (!finalResult) return null;
+    return finalResult.finalized_answer_verdict?.trim() || null;
   });
 
   /** Redirects empty sessions and starts backend interpretation requests for completed readings. */
@@ -108,8 +57,11 @@ export class ResultsComponent implements OnInit {
     this.fetchInterpretations();
   }
 
-  /** Requests the combined summary and each per-oracle interpretation for the results screen. */
+  /** Requests the combined final-summary once and derives per-oracle card insights from it. */
   private fetchInterpretations(): void {
+    if (this._fetchStarted) return;
+    this._fetchStarted = true;
+
     const s = this.session();
     const readings = s.oracleReadings;
 
@@ -117,16 +69,6 @@ export class ResultsComponent implements OnInit {
     this.finalResult.set(null);
     this.apiResults.set(new Array(readings.length).fill(null));
     this.apiErrors.set(new Array(readings.length).fill(null));
-
-    // Results are requested only after the user presses "Get Your Reading" and enters this route.
-    // The combined request drives the top summary; per-oracle requests drive card insights below.
-    let completed = 0;
-    const totalRequests = readings.length + 1;
-
-    const finish = () => {
-      completed++;
-      if (completed >= totalRequests) this.isLoading.set(false);
-    };
 
     this.readingApiService
       .submitFinalSummary({
@@ -146,67 +88,43 @@ export class ResultsComponent implements OnInit {
       .subscribe({
         next: result => {
           this.finalResult.set(result);
-          finish();
+          this.apiResults.set(
+            readings.map((reading, i) => {
+              const method = result.methods[i];
+              return method ? this.parseMethodResult(method, reading.drawnCards) : null;
+            })
+          );
+          this.isLoading.set(false);
         },
-        error: () => {
-          finish();
+        error: err => {
+          const msg = err?.error?.detail ?? 'Reading unavailable — check API configuration.';
+          this.apiErrors.set(readings.map(() => msg));
+          this.isLoading.set(false);
         },
       });
+  }
 
-    readings.forEach((reading, index) => {
-      this.readingApiService
-        .submitReading({
-          question: s.question,
-          fileContent: s.fileContent,
-          system: reading.system,
-          spreadType: reading.spreadLabel ?? reading.spreadType,
-          cards: reading.drawnCards.map(dc => ({
-            id: dc.card.id,
-            name: dc.card.name,
-            position: dc.positionLabel,
-            isReversed: dc.isReversed,
-          })),
-        })
-        .subscribe({
-          next: result => {
-            this.apiResults.update(arr => {
-              const updated = [...arr];
-              updated[index] = result;
-              return updated;
-            });
-            finish();
-          },
-          error: err => {
-            const msg = err?.error?.detail ?? 'Reading unavailable — check API configuration.';
-            this.apiErrors.update(arr => {
-              const updated = [...arr];
-              updated[index] = msg;
-              return updated;
-            });
-            finish();
-          },
-        });
-    });
+  /** Converts one FinalSummaryMethod into the ApiReadingResponse shape the template consumes. */
+  private parseMethodResult(method: FinalSummaryMethod, drawnCards: DrawnCard[]): ApiReadingResponse {
+    const positions = method.spreads?.[0]?.positions ?? [];
+    const cardInsights: CardInsight[] = positions
+      .slice(0, drawnCards.length)
+      .map((pos, i) => ({
+        cardId: drawnCards[i].card.id,
+        insight: (pos.Interpretation ?? pos.meaning ?? '').trim(),
+      }))
+      .filter(ci => ci.insight);
+
+    return {
+      interpretation: (method.final_answer ?? method.summary ?? '').trim(),
+      methodSummaries: method.summary ? [{ method: method.method, summary: method.summary }] : [],
+      cardInsights,
+    };
   }
 
   /** Finds the AI insight for a specific drawn card in one oracle result. */
   getCardInsight(oracleIndex: number, cardId: number): string | null {
     return this.apiResults()[oracleIndex]?.cardInsights?.find(i => i.cardId === cardId)?.insight ?? null;
-  }
-
-  /** Extracts final verdict text from either backend naming convention. */
-  private finalVerdictText(result: ApiReadingResponse | null | undefined): string {
-    return (result?.finalVerdict ?? result?.final_verdict ?? '').trim();
-  }
-
-  /** Extracts finalized answer text with interpretation as the display fallback. */
-  private finalizedAnswerText(result: ApiReadingResponse | null | undefined): string {
-    return (result?.finalized_answer ?? result?.interpretation ?? '').trim();
-  }
-
-  /** Joins fallback per-oracle summary text into one paragraph. */
-  private joinSummaryText(values: string[]): string {
-    return values.map(value => value.trim()).filter(Boolean).join(' ');
   }
 
   /** Whether the given oracle result includes method-level summaries. */
