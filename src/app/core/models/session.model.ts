@@ -51,20 +51,6 @@ export interface ApiSpreadSuggestionResponse {
   methods: ApiSuggestedMethod[];
 }
 
-export interface ApiReadingRequest {
-  // Per-oracle interpretation request used by the results screen for card insights.
-  question: string;
-  fileContent?: string;
-  system: DivinationSystem;
-  spreadType: string;
-  cards: Array<{
-    id: number;
-    name: string;
-    position: string;
-    isReversed: boolean;
-  }>;
-}
-
 export interface ApiCombinedReadingRequest {
   // Combined request used for the single top-level finalized summary.
   question: string;
@@ -93,9 +79,32 @@ export interface MethodSummary {
 
 export interface ApiReadingResponse {
   interpretation: string;
-  finalized_answer?: string;
-  finalVerdict?: string;
-  final_verdict?: string;
   methodSummaries?: MethodSummary[];
   cardInsights: CardInsight[];
+}
+
+export interface FinalSummaryPosition {
+  name: string;
+  selected_card?: string;
+  meaning?: string;
+  Interpretation?: string;
+}
+
+export interface FinalSummarySpread {
+  spread: string;
+  positions: FinalSummaryPosition[];
+  element_count?: number;
+}
+
+export interface FinalSummaryMethod {
+  method: string;
+  summary?: string;
+  final_answer?: string;
+  spreads: FinalSummarySpread[];
+}
+
+export interface FinalSummaryResponse {
+  question?: string;
+  methods: FinalSummaryMethod[];
+  finalized_answer_verdict?: string;
 }
