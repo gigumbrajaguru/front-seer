@@ -1,0 +1,69 @@
+<div class="profile-overlay" [class.is-open]="panelService.isOpen()">
+  <div class="backdrop" (click)="closePanel()"></div>
+
+  <aside class="panel" role="dialog" aria-label="User profile">
+    <button class="close-btn" (click)="closePanel()" title="Close">&#x2715;</button>
+
+    @if (user(); as u) {
+      <!-- Identity -->
+      <div class="identity">
+        <img
+          class="avatar"
+          [src]="displayAvatar()"
+          [alt]="displayName()"
+          referrerpolicy="no-referrer"
+          (error)="onAvatarError($event)"
+        />
+        <h2 class="display-name">{{ displayName() }}</h2>
+        @if (displayEmail()) {
+          <p class="display-email">{{ displayEmail() }}</p>
+        }
+        @if (providerLabel()) {
+          <span class="provider-badge provider-{{ backendProfile()?.provider }}">
+            {{ providerLabel() }}
+          </span>
+        }
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-value">{{ questionCount() }}</span>
+          <span class="stat-label">Questions</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ readingCount() }}</span>
+          <span class="stat-label">Readings</span>
+        </div>
+        @if (memberSince()) {
+          <div class="stat-card">
+            <span class="stat-value stat-date">{{ memberSince() }}</span>
+            <span class="stat-label">Since</span>
+          </div>
+        }
+      </div>
+
+      <!-- Question history -->
+      <section class="history">
+        <h3 class="section-title">Question Log</h3>
+
+        @if (isLoading()) {
+          <p class="hint">Loading…</p>
+        } @else if (!hasToken()) {
+          <p class="hint">Sign in again to unlock history tracking.</p>
+        } @else if (questions().length === 0) {
+          <p class="hint">No questions logged yet. Ask the oracle to begin.</p>
+        } @else {
+          <ul class="questions-list">
+            @for (q of questions(); track q.question_id) {
+              <li class="question-item">
+                <p class="question-text">{{ q.question }}</p>
+                <span class="question-date">{{ formatTime(q.created_at) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </aside>
+</div>
