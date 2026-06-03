@@ -5,19 +5,54 @@
     <div class="header-copy">
       <p class="eyebrow">Your personal reading</p>
       <h1 class="title">Seer.</h1>
-      <p class="subtitle">{{ authService.currentUser() ? 'Shape your reading — the oracle waits in silence until you command it' : 'Sign in to begin — your reading stays yours until you choose to reveal it' }}</p>
-      <p class="site-note">Your question, cards, and choices remain entirely private until you press <strong>Get Your Reading</strong>. Reshape anything — question, methods, spreads, picks — before the oracle speaks.</p>
+      <p class="subtitle">
+        {{
+          authService.currentUser()
+            ? 'Shape your reading — the oracle waits in silence until you command it'
+            : 'Sign in to begin — your reading stays yours until you choose to reveal it'
+        }}
+      </p>
+      <p class="site-note">
+        Your question, cards, and choices remain entirely private until you press
+        <strong>Get Your Reading</strong>. Reshape anything — question, methods, spreads, picks —
+        before the oracle speaks.
+      </p>
     </div>
 
-    @if (authService.currentUser()) {
-      <div class="header-user">
-        <app-user-badge />
-      </div>
-    }
+    <div class="header-emblem" aria-hidden="true">
+      <svg class="emblem-svg" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle class="emblem-halo" cx="110" cy="110" r="98" />
+        <g class="emblem-rotate">
+          <circle class="emblem-ring-ticks" cx="110" cy="110" r="92" />
+          <circle class="emblem-planet" cx="110" cy="18" r="4" />
+        </g>
+        <circle class="emblem-ring" cx="110" cy="110" r="74" />
+        <circle class="emblem-ring-dashed" cx="110" cy="110" r="56" />
+        <circle class="emblem-ring" cx="110" cy="110" r="38" />
+        <path class="emblem-moon" d="M150 32 A25 25 0 1 0 150 82 A18 18 0 1 1 150 32 Z" />
+        <path
+          class="emblem-core"
+          d="M110 80 C113 101 119 107 140 110 C119 113 113 119 110 140 C107 119 101 113 80 110 C101 107 107 101 110 80 Z"
+        />
+        <path
+          class="emblem-spark"
+          d="M62 150 C63 158 64 159 72 160 C64 161 63 162 62 170 C61 162 60 161 52 160 C60 159 61 158 62 150 Z"
+        />
+        <path
+          class="emblem-spark"
+          d="M168 138 C169 144 170 145 176 146 C170 147 169 148 168 154 C167 148 166 147 160 146 C166 145 167 144 168 138 Z"
+        />
+      </svg>
+    </div>
   </header>
 
   <div class="step-indicator aurora-panel" aria-label="Reading progress">
-    @for (flowStep of flowSteps(); track flowStep.key; let stepNumber = $index; let isLast = $last) {
+    @for (
+      flowStep of flowSteps();
+      track flowStep.key;
+      let stepNumber = $index;
+      let isLast = $last
+    ) {
       <button
         type="button"
         class="step"
@@ -43,7 +78,10 @@
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('auth') }}</p>
         <h2 class="section-heading section-heading--left">Unlock your reading</h2>
-        <p class="section-description">A moment of sign-in opens the full reading flow. Everything you shape here stays private until you choose to receive your answer.</p>
+        <p class="section-description">
+          A moment of sign-in opens the full reading flow. Everything you shape here stays private
+          until you choose to receive your answer.
+        </p>
       </div>
 
       <div class="auth-center">
@@ -57,7 +95,10 @@
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('question') }}</p>
         <h2 class="section-heading section-heading--left">Speak your question to the oracle</h2>
-        <p class="section-description">The clearer your intention, the sharper the guidance. Seer reads the energy of your question and recommends the right divination path.</p>
+        <p class="section-description">
+          The clearer your intention, the sharper the guidance. Seer reads the energy of your
+          question and recommends the right divination path.
+        </p>
       </div>
 
       <app-question-panel />
@@ -81,18 +122,29 @@
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('oracle-selection') }}</p>
         <h2 class="section-heading section-heading--left">Choose which voices to consult</h2>
-        <p class="section-description">Each oracle carries its own ancient wisdom. Seer has sensed which traditions suit your question — trust your instinct to add, remove, or change them.</p>
+        <p class="section-description">
+          Each oracle carries its own ancient wisdom. Seer has sensed which traditions suit your
+          question — trust your instinct to add, remove, or change them.
+        </p>
       </div>
 
       @if (session().spreadSuggestionError) {
         <div class="support-note support-note--error">
           <p>{{ session().spreadSuggestionError }}</p>
-          <button type="button" class="btn-ghost" (click)="retryAiSuggestions()" [disabled]="isSuggestingSpreads()">
+          <button
+            type="button"
+            class="btn-ghost"
+            (click)="retryAiSuggestions()"
+            [disabled]="isSuggestingSpreads()"
+          >
             {{ isSuggestingSpreads() ? 'Retrying AI…' : 'Retry AI Suggestions' }}
           </button>
         </div>
       } @else if (hasQuestionSuggestions()) {
-        <p class="support-note">The oracle senses these methods suit your question. Adjust freely — the final choice is always yours.</p>
+        <p class="support-note">
+          The oracle senses these methods suit your question. Adjust freely — the final choice is
+          always yours.
+        </p>
       }
 
       <app-system-selector
@@ -103,12 +155,17 @@
       />
 
       <div class="workflow-actions">
-        <button type="button" class="btn-ghost" (click)="goToStep('question')">Back to Question</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">
+          Back to Question
+        </button>
 
         <div class="workflow-actions-main">
           @if (session().selectedOracles.length > 0) {
             <p class="selection-count">
-              {{ session().selectedOracles.length }} oracle{{ session().selectedOracles.length > 1 ? 's' : '' }} selected
+              {{ session().selectedOracles.length }} oracle{{
+                session().selectedOracles.length > 1 ? 's' : ''
+              }}
+              selected
             </p>
           }
           <button
@@ -130,12 +187,19 @@
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('spread-selection') }}</p>
         <h2 class="section-heading section-heading--left">Define how the cards fall</h2>
-        <p class="section-description">Each spread is a lens — wider formations reveal hidden layers, a single card cuts straight to the core. Go back and reshape anything before drawing.</p>
+        <p class="section-description">
+          Each spread is a lens — wider formations reveal hidden layers, a single card cuts straight
+          to the core. Go back and reshape anything before drawing.
+        </p>
       </div>
 
       <div class="step-edit-row">
-        <button type="button" class="btn-ghost" (click)="goToStep('question')">Edit Question</button>
-        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Change Methods</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">
+          Edit Question
+        </button>
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">
+          Change Methods
+        </button>
       </div>
 
       <div class="summary-chip">
@@ -162,7 +226,9 @@
       </div>
 
       <div class="workflow-actions">
-        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Back to Methods</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">
+          Back to Methods
+        </button>
 
         <div class="workflow-actions-main">
           <button type="button" class="btn-draw" (click)="submitSpreads()">
@@ -179,13 +245,22 @@
       <div class="section-copy">
         <p class="section-kicker">Step {{ displayStepNumber('drawing') }}</p>
         <h2 class="section-heading section-heading--left">Draw your cards — feel the pull</h2>
-        <p class="section-description">Trust your instinct as you choose. Everything is still yours to change — question, methods, spreads — until you command the oracle to speak.</p>
+        <p class="section-description">
+          Trust your instinct as you choose. Everything is still yours to change — question,
+          methods, spreads — until you command the oracle to speak.
+        </p>
       </div>
 
       <div class="step-edit-row">
-        <button type="button" class="btn-ghost" (click)="goToStep('question')">Edit Question</button>
-        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">Change Methods</button>
-        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">Change Spreads</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('question')">
+          Edit Question
+        </button>
+        <button type="button" class="btn-ghost" (click)="goToStep('oracle-selection')">
+          Change Methods
+        </button>
+        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">
+          Change Spreads
+        </button>
       </div>
 
       <div class="summary-chip">
@@ -204,19 +279,27 @@
               <p class="spread-label">{{ displaySpreadLabel(oracle) }}</p>
             </div>
             @if (!hasConfirmedCards(oracleIndex)) {
-              <button type="button" class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">↺ Reshuffle</button>
+              <button type="button" class="btn-ghost" (click)="reshuffleDeck(oracleIndex)">
+                ↺ Reshuffle
+              </button>
             } @else {
-              <button type="button" class="btn-ghost" (click)="redrawOracle(oracleIndex)">↺ Redraw</button>
+              <button type="button" class="btn-ghost" (click)="redrawOracle(oracleIndex)">
+                ↺ Redraw
+              </button>
             }
           </div>
 
           @if (!hasConfirmedCards(oracleIndex)) {
             <div class="selection-header">
               <p class="selection-instruction">
-                Let <strong>{{ requiredCountFor(oracleIndex) }}</strong> card{{ requiredCountFor(oracleIndex) !== 1 ? 's' : '' }} choose you from the shuffled deck
+                Let <strong>{{ requiredCountFor(oracleIndex) }}</strong> card{{
+                  requiredCountFor(oracleIndex) !== 1 ? 's' : ''
+                }}
+                choose you from the shuffled deck
               </p>
               <span class="selection-progress" [class.complete]="selectionComplete(oracleIndex)">
-                {{ selectedIndices(oracleIndex).length }} / {{ requiredCountFor(oracleIndex) }} selected
+                {{ selectedIndices(oracleIndex).length }} /
+                {{ requiredCountFor(oracleIndex) }} selected
               </span>
             </div>
 
@@ -226,13 +309,19 @@
                   type="button"
                   class="deck-card"
                   [class.selected]="isCardSelected(oracleIndex, cardIndex)"
-                  [class.disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
+                  [class.disabled]="
+                    !isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)
+                  "
                   [style.--card-index]="cardIndex"
                   (click)="toggleCardSelection(oracleIndex, cardIndex)"
-                  [disabled]="!isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)"
+                  [disabled]="
+                    !isCardSelected(oracleIndex, cardIndex) && selectionComplete(oracleIndex)
+                  "
                 >
                   @if (isCardSelected(oracleIndex, cardIndex)) {
-                    <span class="deck-card-order">{{ selectionOrder(oracleIndex, cardIndex) }}</span>
+                    <span class="deck-card-order">{{
+                      selectionOrder(oracleIndex, cardIndex)
+                    }}</span>
                   } @else {
                     <span class="deck-card-back-symbol">✦</span>
                   }
@@ -281,11 +370,20 @@
       }
 
       <div class="workflow-actions">
-        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">Back to Spreads</button>
+        <button type="button" class="btn-ghost" (click)="goToStep('spread-selection')">
+          Back to Spreads
+        </button>
 
         <div class="workflow-actions-main">
-          <p class="submit-note">When every card is set, the oracle is ready. Your reading is sealed in this moment.</p>
-          <button type="button" class="btn-draw" (click)="proceed()" [disabled]="!allOraclesReady()">
+          <p class="submit-note">
+            When every card is set, the oracle is ready. Your reading is sealed in this moment.
+          </p>
+          <button
+            type="button"
+            class="btn-draw"
+            (click)="proceed()"
+            [disabled]="!allOraclesReady()"
+          >
             <span class="btn-icon">🌟</span>
             Reveal My Reading
           </button>
