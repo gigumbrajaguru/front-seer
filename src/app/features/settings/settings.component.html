@@ -1,0 +1,385 @@
+<main class="ui-page settings-page">
+  <header class="settings-head">
+    <div>
+      <p class="ui-eyebrow">Preferences</p>
+      <h1 class="ui-title">Settings</h1>
+    </div>
+    @if (savedFlash()) {
+      <span class="saved-flash">✓ Saved</span>
+    }
+  </header>
+
+  @if (user()) {
+    <div class="settings-layout">
+      <!-- Section nav -->
+      <nav class="ui-panel settings-nav" aria-label="Settings sections">
+        @for (section of sections; track section.id) {
+          <button
+            type="button"
+            class="settings-nav-item"
+            [class.active]="activeSection() === section.id"
+            [class.danger]="section.id === 'danger'"
+            (click)="selectSection(section.id)"
+          >
+            <span class="nav-item-icon">{{ section.icon }}</span>
+            <span>{{ section.label }}</span>
+          </button>
+        }
+      </nav>
+
+      <!-- Section content -->
+      <div class="settings-content">
+        <!-- Account -->
+        @if (activeSection() === 'account') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <h2 class="ui-heading">Account</h2>
+            <p class="ui-muted ui-dim section-intro">Manage how you appear across Seer.</p>
+
+            <div class="ui-field">
+              <label class="ui-label" for="displayName">Display name</label>
+              <input
+                id="displayName"
+                class="ui-input"
+                type="text"
+                [value]="prefs.preferences().displayName"
+                [placeholder]="user()?.name || 'Your name'"
+                (input)="onNameInput($any($event.target).value)"
+              />
+            </div>
+
+            <div class="ui-field">
+              <label class="ui-label" for="email">Email</label>
+              <input
+                id="email"
+                class="ui-input"
+                type="email"
+                [value]="user()?.email || ''"
+                disabled
+              />
+              <span class="field-hint">Email is managed by your sign-in provider.</span>
+            </div>
+
+            <div class="ui-field">
+              <label class="ui-label" for="language">Language</label>
+              <select
+                id="language"
+                class="ui-select"
+                [value]="prefs.preferences().language"
+                (change)="onLanguageChange($any($event.target).value)"
+              >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="pt">Português</option>
+              </select>
+            </div>
+          </section>
+        }
+
+        <!-- Notifications -->
+        @if (activeSection() === 'notifications') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <h2 class="ui-heading">Notifications</h2>
+            <p class="ui-muted ui-dim section-intro">Choose what Seer may send you.</p>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Reading is ready</span>
+                <span class="toggle-desc"
+                  >Get notified the moment your interpretation finishes.</span
+                >
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().notifyReadingReady"
+                  (change)="togglePref('notifyReadingReady')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Weekly insight</span>
+                <span class="toggle-desc">A short, personalized note each week.</span>
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().notifyWeeklyInsight"
+                  (change)="togglePref('notifyWeeklyInsight')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Product news</span>
+                <span class="toggle-desc"
+                  >New services like Palmistry and Cosmic Dating as they launch.</span
+                >
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().notifyProductNews"
+                  (change)="togglePref('notifyProductNews')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Offers & marketing</span>
+                <span class="toggle-desc">Occasional promotions. You can opt out anytime.</span>
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().notifyMarketing"
+                  (change)="togglePref('notifyMarketing')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+          </section>
+        }
+
+        <!-- Privacy -->
+        @if (activeSection() === 'privacy') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <h2 class="ui-heading">Privacy &amp; data</h2>
+            <p class="ui-muted ui-dim section-intro">You are always in control of your data.</p>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Save question history</span>
+                <span class="toggle-desc">Keep a private log of your questions and readings.</span>
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().saveHistory"
+                  (change)="togglePref('saveHistory')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Personalized guidance</span>
+                <span class="toggle-desc">Use your history to tailor future readings.</span>
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().personalization"
+                  (change)="togglePref('personalization')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+
+            <hr class="ui-divider section-rule" />
+            <div class="inline-actions">
+              <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm">Export my data</button>
+              <a class="ui-btn ui-btn--ghost ui-btn--sm" routerLink="/privacy">Privacy policy</a>
+            </div>
+          </section>
+        }
+
+        <!-- Billing -->
+        @if (activeSection() === 'billing') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <div class="billing-head">
+              <div>
+                <h2 class="ui-heading">Billing &amp; plans</h2>
+                <p class="ui-muted ui-dim section-intro">
+                  You are on the <strong>Seeker</strong> (free) plan.
+                </p>
+              </div>
+              <span class="ui-chip ui-badge--live">Active</span>
+            </div>
+
+            <div class="plans-grid">
+              @for (plan of plans; track plan.id) {
+                <div
+                  class="plan-card"
+                  [class.featured]="plan.featured"
+                  [class.current]="plan.current"
+                >
+                  @if (plan.featured) {
+                    <span class="plan-flag">Most popular</span>
+                  }
+                  <h3 class="plan-name">{{ plan.name }}</h3>
+                  <p class="plan-price">
+                    <span class="plan-amount">{{ plan.price }}</span>
+                    <span class="plan-cadence">{{ plan.cadence }}</span>
+                  </p>
+                  <p class="plan-blurb">{{ plan.blurb }}</p>
+                  <ul class="plan-perks">
+                    @for (perk of plan.perks; track perk) {
+                      <li>✦ {{ perk }}</li>
+                    }
+                  </ul>
+                  @if (plan.current) {
+                    <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm plan-cta" disabled>
+                      Current plan
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="ui-btn plan-cta"
+                      [class.ui-btn--primary]="plan.featured"
+                      [class.ui-btn--soft]="!plan.featured"
+                      disabled
+                    >
+                      Upgrade — soon
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="billing-blocks">
+              <div class="billing-block">
+                <h3 class="block-title">Payment methods</h3>
+                <div class="ui-empty payment-empty">
+                  <span class="ui-empty-glyph">💳</span>
+                  <p class="ui-muted">No payment method on file.</p>
+                  <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" disabled>
+                    Add payment method — soon
+                  </button>
+                </div>
+              </div>
+              <div class="billing-block">
+                <h3 class="block-title">Billing history</h3>
+                <div class="ui-empty payment-empty">
+                  <span class="ui-empty-glyph">🧾</span>
+                  <p class="ui-muted">No invoices yet. Upgrades will appear here.</p>
+                </div>
+              </div>
+            </div>
+            <p class="billing-note">
+              Secure checkout is on the way. Payments will be processed by a PCI-compliant provider
+              — Seer never stores your card details.
+            </p>
+          </section>
+        }
+
+        <!-- Appearance -->
+        @if (activeSection() === 'appearance') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <h2 class="ui-heading">Appearance</h2>
+            <p class="ui-muted ui-dim section-intro">Tune how Seer feels.</p>
+
+            <div class="theme-row">
+              <div class="theme-swatch active" aria-label="Daylight theme">
+                <span class="swatch-fill swatch-light"></span>
+                <span class="swatch-label">Daylight</span>
+              </div>
+              <div class="theme-swatch disabled" aria-label="Midnight theme coming soon">
+                <span class="swatch-fill swatch-dark"></span>
+                <span class="swatch-label"
+                  >Midnight <span class="ui-chip ui-badge--soon">Soon</span></span
+                >
+              </div>
+            </div>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <span class="toggle-title">Reduce motion</span>
+                <span class="toggle-desc">Minimize animations and transitions.</span>
+              </span>
+              <span class="ui-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="prefs.preferences().reduceMotion"
+                  (change)="togglePref('reduceMotion')"
+                />
+                <span class="ui-toggle-track"></span><span class="ui-toggle-thumb"></span>
+              </span>
+            </label>
+          </section>
+        }
+
+        <!-- Connections -->
+        @if (activeSection() === 'connections') {
+          <section class="ui-panel ui-panel--pad settings-section">
+            <h2 class="ui-heading">Connected accounts</h2>
+            <p class="ui-muted ui-dim section-intro">Sign-in providers linked to your account.</p>
+
+            <div class="connection-row">
+              <span class="connection-info"
+                ><span class="connection-icon">🔗</span> {{ providerLabel() }}</span
+              >
+              <span class="ui-chip ui-badge--live">Connected</span>
+            </div>
+            <div class="connection-row muted">
+              <span class="connection-info"
+                ><span class="connection-icon">＋</span> Link another provider</span
+              >
+              <span class="ui-chip ui-badge--soon">Soon</span>
+            </div>
+          </section>
+        }
+
+        <!-- Danger -->
+        @if (activeSection() === 'danger') {
+          <section class="ui-panel ui-panel--pad settings-section danger-section">
+            <h2 class="ui-heading">Danger zone</h2>
+            <p class="ui-muted ui-dim section-intro">Sensitive actions for your account.</p>
+
+            <div class="danger-row">
+              <div>
+                <p class="danger-title">Sign out</p>
+                <p class="ui-muted ui-dim">End your session on this device.</p>
+              </div>
+              <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" (click)="logout()">
+                Sign out
+              </button>
+            </div>
+
+            <div class="danger-row">
+              <div>
+                <p class="danger-title">Reset preferences</p>
+                <p class="ui-muted ui-dim">Restore all settings on this page to defaults.</p>
+              </div>
+              <button
+                type="button"
+                class="ui-btn ui-btn--ghost ui-btn--sm"
+                (click)="resetPreferences()"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div class="danger-row">
+              <div>
+                <p class="danger-title">Delete account</p>
+                <p class="ui-muted ui-dim">
+                  Permanently remove your account and data. This cannot be undone.
+                </p>
+              </div>
+              <button type="button" class="ui-btn ui-btn--danger ui-btn--sm" disabled>
+                Delete — soon
+              </button>
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+  } @else {
+    <section class="ui-panel ui-panel--pad signed-out">
+      <span class="signed-out-glyph">⚙</span>
+      <h2 class="ui-heading">Sign in to manage settings</h2>
+      <p class="ui-muted">Your preferences, billing and connected accounts live here.</p>
+      <a class="ui-btn ui-btn--primary" routerLink="/">Sign in</a>
+    </section>
+  }
+</main>
