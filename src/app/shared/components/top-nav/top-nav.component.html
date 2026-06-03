@@ -1,0 +1,194 @@
+<header class="top-nav">
+  <div class="nav-inner">
+    <!-- Brand -->
+    <a class="nav-brand" routerLink="/" (click)="closeAll()" aria-label="Seer home">
+      <span class="brand-mark">✦</span>
+      <span class="brand-name">Seer.</span>
+    </a>
+
+    <!-- Primary links (desktop) -->
+    <nav class="nav-links" aria-label="Primary">
+      <a
+        class="nav-link"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeAll()"
+        >Readings</a
+      >
+
+      <div class="nav-dropdown" [class.open]="servicesOpen()">
+        <button
+          type="button"
+          class="nav-link nav-trigger"
+          [class.active]="servicesOpen()"
+          [attr.aria-expanded]="servicesOpen()"
+          aria-haspopup="true"
+          (click)="toggleServices()"
+        >
+          Services
+          <span class="caret" aria-hidden="true">▾</span>
+        </button>
+
+        @if (servicesOpen()) {
+          <div class="dropdown-panel services-panel" role="menu">
+            <p class="dropdown-eyebrow">Spiritual services</p>
+            <div class="services-menu">
+              @for (service of services; track service.id) {
+                <a
+                  class="service-row accent-{{ service.accent }}"
+                  [routerLink]="serviceLink(service)"
+                  role="menuitem"
+                  (click)="closeAll()"
+                >
+                  <span class="service-row-icon">{{ service.icon }}</span>
+                  <span class="service-row-body">
+                    <span class="service-row-title">
+                      {{ service.label }}
+                      @if (service.status === 'soon') {
+                        <span class="ui-chip ui-badge--soon">Soon</span>
+                      }
+                    </span>
+                    <span class="service-row-blurb">{{ service.blurb }}</span>
+                  </span>
+                </a>
+              }
+            </div>
+            <a class="dropdown-foot" routerLink="/services" role="menuitem" (click)="closeAll()">
+              Explore all services →
+            </a>
+          </div>
+        }
+      </div>
+
+      <a class="nav-link" routerLink="/services" routerLinkActive="active" (click)="closeAll()"
+        >Explore</a
+      >
+    </nav>
+
+    <!-- Account / sign-in (desktop) -->
+    <div class="nav-account">
+      @if (user(); as u) {
+        <div class="nav-dropdown account-dropdown" [class.open]="accountOpen()">
+          <button
+            type="button"
+            class="account-trigger"
+            [attr.aria-expanded]="accountOpen()"
+            aria-haspopup="true"
+            (click)="toggleAccount()"
+          >
+            <img
+              class="ui-avatar account-avatar"
+              [src]="u.picture || avatarFallback(u.name)"
+              [alt]="u.name"
+              referrerpolicy="no-referrer"
+              (error)="onAvatarError($event, u.name)"
+            />
+            <span class="account-name">{{ u.name }}</span>
+            <span class="caret" aria-hidden="true">▾</span>
+          </button>
+
+          @if (accountOpen()) {
+            <div class="dropdown-panel account-panel" role="menu">
+              <div class="account-head">
+                <img
+                  class="ui-avatar account-head-avatar"
+                  [src]="u.picture || avatarFallback(u.name)"
+                  [alt]="u.name"
+                  referrerpolicy="no-referrer"
+                  (error)="onAvatarError($event, u.name)"
+                />
+                <span class="account-head-name">{{ u.name }}</span>
+                @if (u.email) {
+                  <span class="account-head-email">{{ u.email }}</span>
+                }
+              </div>
+              <a class="menu-item" routerLink="/profile" role="menuitem" (click)="closeAll()">
+                <span class="menu-glyph">◍</span> Profile
+              </a>
+              <a class="menu-item" routerLink="/settings" role="menuitem" (click)="closeAll()">
+                <span class="menu-glyph">⚙</span> Settings
+              </a>
+              <a
+                class="menu-item"
+                routerLink="/settings"
+                [queryParams]="{ section: 'billing' }"
+                role="menuitem"
+                (click)="closeAll()"
+              >
+                <span class="menu-glyph">✦</span> Billing &amp; plans
+              </a>
+              <hr class="menu-divider" />
+              <button type="button" class="menu-item menu-item--danger" (click)="logout()">
+                <span class="menu-glyph">⏻</span> Sign out
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <a class="ui-btn ui-btn--primary ui-btn--sm" routerLink="/" (click)="closeAll()">Sign in</a>
+      }
+
+      <!-- Mobile hamburger -->
+      <button
+        type="button"
+        class="hamburger"
+        [class.open]="mobileOpen()"
+        [attr.aria-expanded]="mobileOpen()"
+        aria-label="Toggle menu"
+        (click)="toggleMobile()"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  @if (mobileOpen()) {
+    <nav class="mobile-menu" aria-label="Mobile">
+      <a
+        class="mobile-link"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeAll()"
+        >Readings</a
+      >
+      <a class="mobile-link" routerLink="/services" routerLinkActive="active" (click)="closeAll()"
+        >Explore services</a
+      >
+
+      <p class="mobile-eyebrow">Services</p>
+      @for (service of services; track service.id) {
+        <a class="mobile-service" [routerLink]="serviceLink(service)" (click)="closeAll()">
+          <span class="service-row-icon">{{ service.icon }}</span>
+          <span class="service-row-title">
+            {{ service.label }}
+            @if (service.status === 'soon') {
+              <span class="ui-chip ui-badge--soon">Soon</span>
+            }
+          </span>
+        </a>
+      }
+
+      <hr class="ui-divider mobile-sep" />
+
+      @if (user(); as u) {
+        <a class="mobile-link" routerLink="/profile" (click)="closeAll()">Profile</a>
+        <a class="mobile-link" routerLink="/settings" (click)="closeAll()">Settings</a>
+        <a
+          class="mobile-link"
+          routerLink="/settings"
+          [queryParams]="{ section: 'billing' }"
+          (click)="closeAll()"
+          >Billing &amp; plans</a
+        >
+        <button type="button" class="mobile-link mobile-link--danger" (click)="logout()">
+          Sign out
+        </button>
+      } @else {
+        <a class="ui-btn ui-btn--primary mobile-cta" routerLink="/" (click)="closeAll()">Sign in</a>
+      }
+    </nav>
+  }
+</header>
