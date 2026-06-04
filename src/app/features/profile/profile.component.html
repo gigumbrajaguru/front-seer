@@ -1,111 +1,196 @@
-<div class="profile-overlay" [class.is-open]="panelService.isOpen()">
-  <div class="backdrop" (click)="closePanel()"></div>
-
-  <aside class="panel" role="dialog" aria-label="User profile">
-    <button class="close-btn" (click)="closePanel()" title="Close">&#x2715;</button>
-
-    @if (user(); as u) {
-      <!-- Identity -->
-      <div class="identity">
-        <img
-          class="avatar"
-          [src]="displayAvatar()"
-          [alt]="displayName()"
-          referrerpolicy="no-referrer"
-          (error)="onAvatarError($event)"
-        />
-
-        @if (!isEditing()) {
-          <h2 class="display-name">{{ displayName() }}</h2>
+<main class="ui-page ui-page--narrow profile-page">
+  @if (user()) {
+    <!-- Identity header -->
+    <section class="ui-panel profile-hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <img
+        class="ui-avatar hero-avatar"
+        [src]="displayAvatar()"
+        [alt]="displayName()"
+        referrerpolicy="no-referrer"
+        (error)="onAvatarError($event)"
+      />
+      <div class="hero-body">
+        <p class="ui-eyebrow">Your account</p>
+        <h1 class="ui-title hero-name">{{ displayName() }}</h1>
+        <div class="hero-meta">
           @if (displayEmail()) {
-            <p class="display-email">{{ displayEmail() }}</p>
+            <span class="hero-email">{{ displayEmail() }}</span>
           }
           @if (providerLabel()) {
-            <span class="provider-badge provider-{{ backendProfile()?.provider }}">
-              {{ providerLabel() }}
-            </span>
+            <span class="ui-chip provider-chip provider-{{ backendProfile()?.provider }}">{{
+              providerLabel()
+            }}</span>
           }
-          @if (hasToken()) {
-            <button class="edit-btn" (click)="startEdit()" title="Edit profile">Edit Profile</button>
+          @if (memberSince()) {
+            <span class="ui-chip">Member since {{ memberSince() }}</span>
           }
-        } @else {
-          <!-- Edit form -->
-          <div class="edit-form">
-            <label class="edit-label">
-              Display Name
-              <input
-                class="edit-input"
-                type="text"
-                [ngModel]="editName()"
-                (ngModelChange)="editName.set($event)"
-                placeholder="Your name"
-                maxlength="80"
-                [disabled]="isSaving()"
-              />
-            </label>
-            <label class="edit-label">
-              Avatar URL
-              <input
-                class="edit-input"
-                type="url"
-                [ngModel]="editAvatarUrl()"
-                (ngModelChange)="editAvatarUrl.set($event)"
-                placeholder="https://…"
-                [disabled]="isSaving()"
-              />
-            </label>
-            @if (saveError()) {
-              <p class="edit-error">{{ saveError() }}</p>
-            }
-            <div class="edit-actions">
-              <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving()">
-                {{ isSaving() ? 'Saving…' : 'Save' }}
-              </button>
-              <button class="cancel-btn" (click)="cancelEdit()" [disabled]="isSaving()">Cancel</button>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a class="ui-btn ui-btn--ghost ui-btn--sm" routerLink="/settings">Edit profile</a>
+        <a
+          class="ui-btn ui-btn--soft ui-btn--sm"
+          routerLink="/settings"
+          [queryParams]="{ section: 'billing' }"
+          >Billing &amp; plans</a
+        >
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-row">
+      <div class="ui-panel stat-card">
+        <span class="stat-value">{{ questionCount() }}</span>
+        <span class="stat-label">Questions asked</span>
+      </div>
+      <div class="ui-panel stat-card">
+        <span class="stat-value">{{ readingCount() }}</span>
+        <span class="stat-label">Readings received</span>
+      </div>
+      <div class="ui-panel stat-card stat-card--cta">
+        <span class="stat-cta-icon">🔮</span>
+        <a class="ui-btn ui-btn--primary ui-btn--sm" routerLink="/">New reading</a>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <section class="ui-panel ui-panel--pad activity-panel">
+      <div class="ui-tabs" role="tablist">
+        <button
+          type="button"
+          class="ui-tab"
+          [class.active]="activeTab() === 'overview'"
+          (click)="setTab('overview')"
+          role="tab"
+        >
+          Overview
+        </button>
+        <button
+          type="button"
+          class="ui-tab"
+          [class.active]="activeTab() === 'questions'"
+          (click)="setTab('questions')"
+          role="tab"
+        >
+          Questions
+        </button>
+        <button
+          type="button"
+          class="ui-tab"
+          [class.active]="activeTab() === 'readings'"
+          (click)="setTab('readings')"
+          role="tab"
+        >
+          Readings
+        </button>
+      </div>
+
+      @if (!hasToken()) {
+        <div class="ui-empty">
+          <span class="ui-empty-glyph">🔐</span>
+          <p class="ui-muted">Sign in again to unlock history tracking across your devices.</p>
+          <a class="ui-btn ui-btn--ghost ui-btn--sm" routerLink="/">Go to readings</a>
+        </div>
+      } @else if (isLoading()) {
+        <p class="ui-muted loading-hint">Gathering your history…</p>
+      } @else {
+        <!-- Overview -->
+        @if (activeTab() === 'overview') {
+          <div class="overview-grid">
+            <div class="overview-block">
+              <h3 class="block-title">Recent questions</h3>
+              @if (questions().length === 0) {
+                <p class="ui-muted ui-dim">No questions logged yet.</p>
+              } @else {
+                <ul class="mini-list">
+                  @for (q of questions().slice(0, 4); track q.question_id) {
+                    <li>
+                      <span class="mini-text">{{ q.question }}</span>
+                      <span class="mini-date">{{ formatTime(q.created_at) }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+            <div class="overview-block">
+              <h3 class="block-title">Recent readings</h3>
+              @if (readings().length === 0) {
+                <p class="ui-muted ui-dim">No readings yet — your first awaits.</p>
+              } @else {
+                <ul class="mini-list">
+                  @for (r of readings().slice(0, 4); track r.reading_id) {
+                    <li>
+                      <span class="mini-text">{{ r.question }}</span>
+                      <span class="mini-date">{{ formatTime(r.created_at) }}</span>
+                    </li>
+                  }
+                </ul>
+              }
             </div>
           </div>
         }
-      </div>
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <span class="stat-value">{{ questionCount() }}</span>
-          <span class="stat-label">Questions</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ readingCount() }}</span>
-          <span class="stat-label">Readings</span>
-        </div>
-        @if (memberSince()) {
-          <div class="stat-card">
-            <span class="stat-value stat-date">{{ memberSince() }}</span>
-            <span class="stat-label">Since</span>
-          </div>
+        <!-- Questions -->
+        @if (activeTab() === 'questions') {
+          @if (questions().length === 0) {
+            <div class="ui-empty">
+              <span class="ui-empty-glyph">✦</span>
+              <p class="ui-muted">No questions logged yet. Ask the oracle to begin.</p>
+              <a class="ui-btn ui-btn--primary ui-btn--sm" routerLink="/">Ask a question</a>
+            </div>
+          } @else {
+            <ul class="history-list">
+              @for (q of questions(); track q.question_id) {
+                <li class="history-item">
+                  <p class="history-text">{{ q.question }}</p>
+                  <span class="history-date">{{ formatTime(q.created_at) }}</span>
+                </li>
+              }
+            </ul>
+          }
         }
-      </div>
 
-      <!-- Question history -->
-      <section class="history">
-        <h3 class="section-title">Question Log</h3>
-
-        @if (isLoading()) {
-          <p class="hint">Loading…</p>
-        } @else if (!hasToken()) {
-          <p class="hint">Sign in again to unlock history tracking.</p>
-        } @else if (questions().length === 0) {
-          <p class="hint">No questions logged yet. Ask the oracle to begin.</p>
-        } @else {
-          <ul class="questions-list">
-            @for (q of questions(); track q.question_id) {
-              <li class="question-item">
-                <p class="question-text">{{ q.question }}</p>
-                <span class="question-date">{{ formatTime(q.created_at) }}</span>
-              </li>
-            }
-          </ul>
+        <!-- Readings -->
+        @if (activeTab() === 'readings') {
+          @if (readings().length === 0) {
+            <div class="ui-empty">
+              <span class="ui-empty-glyph">🌟</span>
+              <p class="ui-muted">No readings yet — your first awaits.</p>
+              <a class="ui-btn ui-btn--primary ui-btn--sm" routerLink="/">Start a reading</a>
+            </div>
+          } @else {
+            <ul class="history-list">
+              @for (r of readings(); track r.reading_id) {
+                <li class="history-item history-item--reading">
+                  <div class="reading-top">
+                    <p class="history-text">{{ r.question }}</p>
+                    <span class="history-date">{{ formatTime(r.created_at) }}</span>
+                  </div>
+                  <div class="reading-systems">
+                    @for (s of systemsFor(r.systems); track s.label) {
+                      <span class="ui-chip"
+                        ><span class="sys-icon">{{ s.icon }}</span> {{ s.label }}</span
+                      >
+                    }
+                  </div>
+                  @if (r.verdict) {
+                    <p class="reading-verdict">{{ r.verdict }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          }
         }
-      </section>
-    }
-  </aside>
-</div>
+      }
+    </section>
+  } @else {
+    <!-- Signed out -->
+    <section class="ui-panel ui-panel--pad signed-out">
+      <span class="signed-out-glyph">🔮</span>
+      <h1 class="ui-heading">Sign in to view your profile</h1>
+      <p class="ui-muted">Your questions, readings and preferences live here once you sign in.</p>
+      <a class="ui-btn ui-btn--primary" routerLink="/">Sign in</a>
+    </section>
+  }
+</main>

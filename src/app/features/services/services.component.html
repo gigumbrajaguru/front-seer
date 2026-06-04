@@ -1,0 +1,67 @@
+<main class="ui-page services-page">
+  <header class="ui-panel services-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <p class="ui-eyebrow">The Seer constellation</p>
+    <h1 class="ui-title">Spiritual services</h1>
+    <p class="ui-muted hero-sub">
+      One home for every path to insight. Begin with oracle readings today — palmistry, cosmic
+      dating and more are taking shape in the stars.
+    </p>
+  </header>
+
+  <section class="services-grid">
+    @for (service of services; track service.id) {
+      <article
+        class="ui-panel service-card accent-{{ service.accent }}"
+        [class.is-soon]="!isLive(service)"
+      >
+        <div class="card-glow" aria-hidden="true"></div>
+        <div class="card-head">
+          <span class="card-icon">{{ service.icon }}</span>
+          @if (isLive(service)) {
+            <span class="ui-chip ui-badge--live">Available</span>
+          } @else {
+            <span class="ui-chip ui-badge--soon">Coming soon</span>
+          }
+        </div>
+
+        <h2 class="card-title">{{ service.label }}</h2>
+        <p class="card-blurb">{{ service.blurb }}</p>
+
+        @if (service.tags?.length) {
+          <div class="card-tags">
+            @for (tag of service.tags; track tag) {
+              <span class="ui-chip">{{ tag }}</span>
+            }
+          </div>
+        }
+
+        <div class="card-foot">
+          @if (isLive(service)) {
+            <a class="ui-btn ui-btn--primary ui-btn--sm" [routerLink]="service.route"
+              >Open {{ service.label }}</a
+            >
+          } @else if (isNotified(service)) {
+            <span class="notified-msg">✓ We'll let you know</span>
+          } @else {
+            <button
+              type="button"
+              class="ui-btn ui-btn--soft ui-btn--sm"
+              (click)="notifyMe(service)"
+            >
+              Notify me
+            </button>
+          }
+        </div>
+      </article>
+    }
+  </section>
+
+  <section class="ui-panel ui-panel--pad services-cta">
+    <div>
+      <h2 class="ui-heading">Ready for guidance now?</h2>
+      <p class="ui-muted ui-dim">Your oracle reading is one question away.</p>
+    </div>
+    <a class="ui-btn ui-btn--primary" routerLink="/">Start a reading</a>
+  </section>
+</main>
