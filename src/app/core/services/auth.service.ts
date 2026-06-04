@@ -7,23 +7,33 @@ export interface GoogleUser {
   picture: string;
 }
 
+/**
+ * Session auth via httpOnly cookies (set by the backend on verify/refresh).
+ *
+ * The access/refresh tokens are never exposed to JavaScript, so an XSS bug
+ * cannot exfiltrate them. The only value kept in JS is the CSRF token, which
+ * the backend returns in the verify/refresh response body and which we echo in
+ * the `X-CSRF-Token` header on state-changing requests (synchronizer-token
+ * pattern — works even though the API is on a different subdomain than the SPA).
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly USER_KEY = 'seer_user';
-  private readonly TOKEN_KEY = 'seer_token';
+  private readonly CSRF_KEY = 'seer_csrf';
   private readonly apiBaseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
 
   readonly currentUser = signal<GoogleUser | null>(this.loadUser());
 
-  /** Resolves with the session token once backend verify completes (or null on failure). */
-  private _pendingToken: Promise<string | null> | null = null;
+  /** Resolves once an in-flight sign-in verify completes (cookies set). */
+  private _pendingVerify: Promise<void> | null = null;
+  /** In-flight refresh, shared so concurrent 401s trigger only one call. */
+  private _refreshInFlight: Promise<boolean> | null = null;
 
   constructor(private ngZone: NgZone) {
-    // If a token is already stored, create a pre-resolved promise so callers
-    // that await getSessionTokenAsync() don't wait unnecessarily.
-    const cached = this.getSessionToken();
-    if (cached) {
-      this._pendingToken = Promise.resolve(cached);
+    // Returning user whose CSRF token was lost (e.g. cleared) but whose session
+    // cookie is still valid: silently refresh to mint a fresh CSRF + access token.
+    if (this.currentUser() && !this.getCsrfToken()) {
+      void this.refreshSession();
     }
   }
 
@@ -36,41 +46,30 @@ export class AuthService {
     }
   }
 
-  getSessionToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+  /** Whether a user is signed in (the session itself lives in an httpOnly cookie). */
+  isAuthenticated(): boolean {
+    return this.currentUser() !== null;
   }
 
-  /**
-   * Waits for any in-flight backend verify to finish, then returns the token.
-   * Callers that need the token for the first request after sign-in use this
-   * instead of getSessionToken() to avoid the race condition.
-   */
-  getSessionTokenAsync(): Promise<string | null> {
-    const current = this.getSessionToken();
-    if (current) return Promise.resolve(current);
-    if (this._pendingToken) return this._pendingToken;
-    return Promise.resolve(null);
+  /** CSRF token to echo in the X-CSRF-Token header on mutating requests. */
+  getCsrfToken(): string | null {
+    return localStorage.getItem(this.CSRF_KEY);
   }
 
-  getAuthHeaders(): Record<string, string> {
-    const token = this.getSessionToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+  /** Resolves once any in-flight sign-in verify has set the session cookie. */
+  whenReady(): Promise<void> {
+    return this._pendingVerify ?? Promise.resolve();
   }
 
   setUserFromCredential(credential: string): void {
     const payload = this.decodeJwt(credential);
-    const user: GoogleUser = {
-      name: payload.name,
-      email: payload.email,
-      picture: payload.picture,
-    };
-    this.persistUser(user);
-    this._pendingToken = this.verifyWithBackend('google', credential);
+    this.persistUser({ name: payload.name, email: payload.email, picture: payload.picture });
+    this._pendingVerify = this.verifyWithBackend('google', credential);
   }
 
   setUserFromProviderToken(provider: string, token: string, user: GoogleUser): void {
     this.persistUser(user);
-    this._pendingToken = this.verifyWithBackend(provider, token);
+    this._pendingVerify = this.verifyWithBackend(provider, token);
   }
 
   setManualUser(name: string, email: string): void {
@@ -85,32 +84,76 @@ export class AuthService {
   }
 
   logout(): void {
-    const user = this.currentUser();
-    this.notifyServerLogout(user);
-    this._pendingToken = null;
-    this.currentUser.set(null);
-    localStorage.removeItem(this.USER_KEY);
-    localStorage.removeItem(this.TOKEN_KEY);
+    const headers: Record<string, string> = {};
+    const csrf = this.getCsrfToken();
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+    void fetch(`${this.apiBaseUrl}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+      cache: 'no-store',
+      headers,
+    }).catch(() => undefined);
+    this.clearSession();
   }
 
-  private async verifyWithBackend(provider: string, token: string): Promise<string | null> {
+  /**
+   * Refreshes the session via the httpOnly refresh cookie. Single-flight.
+   * Returns true on success; clears the session on an explicit 401 (session ended).
+   */
+  refreshSession(): Promise<boolean> {
+    if (this._refreshInFlight) return this._refreshInFlight;
+
+    this._refreshInFlight = (async () => {
+      try {
+        const headers: Record<string, string> = {};
+        const csrf = this.getCsrfToken();
+        if (csrf) headers['X-CSRF-Token'] = csrf;
+        const response = await fetch(`${this.apiBaseUrl}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers,
+        });
+        if (response.ok) {
+          const data = await response.json() as { csrf_token?: string };
+          this.storeCsrf(data.csrf_token);
+          return true;
+        }
+        if (response.status === 401) {
+          this.clearSession();
+        }
+        return false;
+      } catch {
+        return false; // network error — keep session, allow later retry
+      } finally {
+        this._refreshInFlight = null;
+      }
+    })();
+
+    return this._refreshInFlight;
+  }
+
+  private async verifyWithBackend(provider: string, token: string): Promise<void> {
     try {
       const response = await fetch(`${this.apiBaseUrl}/auth/verify/${provider}`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
       if (response.ok) {
-        const data = await response.json() as { session_token?: string };
-        if (data.session_token) {
-          localStorage.setItem(this.TOKEN_KEY, data.session_token);
-          return data.session_token;
-        }
+        const data = await response.json() as { csrf_token?: string };
+        this.storeCsrf(data.csrf_token);
       }
     } catch {
-      // Local auth still valid; tracking won't work until next successful verify
+      // Local user state stays; API calls will 401 until a successful verify.
     }
-    return null;
+  }
+
+  private storeCsrf(csrf?: string): void {
+    if (csrf) {
+      localStorage.setItem(this.CSRF_KEY, csrf);
+    }
   }
 
   private persistUser(user: GoogleUser): void {
@@ -120,22 +163,11 @@ export class AuthService {
     });
   }
 
-  private notifyServerLogout(user: GoogleUser | null): void {
-    if (!user) return;
-    const params = new URLSearchParams({
-      event: 'logout',
-      email: user.email,
-      name: user.name,
-      source: 'frontend',
-      timestamp: new Date().toISOString(),
-    });
-    void fetch(`${this.apiBaseUrl}/?${params.toString()}`, {
-      method: 'GET',
-      keepalive: true,
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-store',
-    }).catch(() => undefined);
+  private clearSession(): void {
+    this._pendingVerify = null;
+    this.ngZone.run(() => this.currentUser.set(null));
+    localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.CSRF_KEY);
   }
 
   private decodeJwt(token: string): { name: string; email: string; picture: string } {

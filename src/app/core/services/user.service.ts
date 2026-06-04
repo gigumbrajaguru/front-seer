@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthService } from './auth.service';
 
 export interface BackendProfile {
   user_id: string;
@@ -40,33 +39,35 @@ export interface ReadingsResponse {
   total: number;
 }
 
+export interface UpdateProfileRequest {
+  name?: string;
+  avatar_url?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly authService = inject(AuthService);
   private readonly baseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
 
-  private get headers(): HttpHeaders {
-    return new HttpHeaders(this.authService.getAuthHeaders());
-  }
+  // Auth headers + refresh-on-401 are applied by the authInterceptor.
 
   getProfile(): Observable<BackendProfile> {
-    return this.http.get<BackendProfile>(`${this.baseUrl}/api/user/profile`, {
-      headers: this.headers,
-    });
+    return this.http.get<BackendProfile>(`${this.baseUrl}/api/user/profile`);
   }
 
   getQuestions(skip = 0, limit = 30): Observable<QuestionsResponse> {
     return this.http.get<QuestionsResponse>(`${this.baseUrl}/api/user/questions`, {
-      headers: this.headers,
       params: { skip: skip.toString(), limit: limit.toString() },
     });
   }
 
   getReadings(skip = 0, limit = 20): Observable<ReadingsResponse> {
     return this.http.get<ReadingsResponse>(`${this.baseUrl}/api/user/readings`, {
-      headers: this.headers,
       params: { skip: skip.toString(), limit: limit.toString() },
     });
+  }
+
+  updateProfile(data: UpdateProfileRequest): Observable<BackendProfile> {
+    return this.http.patch<BackendProfile>(`${this.baseUrl}/api/user/profile`, data);
   }
 }

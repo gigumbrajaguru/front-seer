@@ -1,5 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfilePanelService } from '../../core/services/profile-panel.service';
@@ -15,7 +16,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
@@ -29,6 +30,11 @@ export class ProfileComponent implements OnInit {
   readonly questions = signal<QuestionHistoryItem[]>([]);
   readonly isLoading = signal(false);
   readonly hasToken = signal(false);
+  readonly isEditing = signal(false);
+  readonly isSaving = signal(false);
+  readonly saveError = signal<string | null>(null);
+  readonly editName = signal('');
+  readonly editAvatarUrl = signal('');
 
   readonly user = computed(() => this.authService.currentUser());
   readonly displayName = computed(() => this.backendProfile()?.name ?? this.user()?.name ?? 'Seer User');
@@ -60,9 +66,9 @@ export class ProfileComponent implements OnInit {
   }
 
   private loadData(): void {
-    const token = this.authService.getSessionToken();
-    this.hasToken.set(!!token);
-    if (!token) return;
+    const authed = this.authService.isAuthenticated();
+    this.hasToken.set(authed);
+    if (!authed) return;
 
     this.isLoading.set(true);
     this.userService.getProfile().subscribe({
@@ -84,10 +90,57 @@ export class ProfileComponent implements OnInit {
     this.backendProfile.set(null);
     this.questions.set([]);
     this.isLoading.set(false);
+    this.isEditing.set(false);
+    this.saveError.set(null);
   }
 
   closePanel(): void {
     this.panelService.close();
+  }
+
+  startEdit(): void {
+    const p = this.backendProfile();
+    this.editName.set(p?.name ?? this.user()?.name ?? '');
+    this.editAvatarUrl.set(p?.avatar_url ?? '');
+    this.saveError.set(null);
+    this.isEditing.set(true);
+  }
+
+  cancelEdit(): void {
+    this.isEditing.set(false);
+    this.saveError.set(null);
+  }
+
+  saveProfile(): void {
+    const name = this.editName().trim();
+    if (!name) {
+      this.saveError.set('Display name cannot be empty.');
+      return;
+    }
+    const avatarUrl = this.editAvatarUrl().trim();
+    if (avatarUrl && !avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://')) {
+      this.saveError.set('Avatar URL must start with http:// or https://');
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.saveError.set(null);
+    const payload: { name: string; avatar_url?: string } = { name };
+    if (avatarUrl !== (this.backendProfile()?.avatar_url ?? '')) {
+      payload.avatar_url = avatarUrl || '';
+    }
+
+    this.userService.updateProfile(payload).subscribe({
+      next: (updated) => {
+        this.backendProfile.set(updated);
+        this.isSaving.set(false);
+        this.isEditing.set(false);
+      },
+      error: (err) => {
+        this.saveError.set(err?.error?.detail ?? 'Failed to save. Try again.');
+        this.isSaving.set(false);
+      },
+    });
   }
 
   onAvatarError(event: Event): void {

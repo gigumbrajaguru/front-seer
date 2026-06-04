@@ -14,14 +14,56 @@
           referrerpolicy="no-referrer"
           (error)="onAvatarError($event)"
         />
-        <h2 class="display-name">{{ displayName() }}</h2>
-        @if (displayEmail()) {
-          <p class="display-email">{{ displayEmail() }}</p>
-        }
-        @if (providerLabel()) {
-          <span class="provider-badge provider-{{ backendProfile()?.provider }}">
-            {{ providerLabel() }}
-          </span>
+
+        @if (!isEditing()) {
+          <h2 class="display-name">{{ displayName() }}</h2>
+          @if (displayEmail()) {
+            <p class="display-email">{{ displayEmail() }}</p>
+          }
+          @if (providerLabel()) {
+            <span class="provider-badge provider-{{ backendProfile()?.provider }}">
+              {{ providerLabel() }}
+            </span>
+          }
+          @if (hasToken()) {
+            <button class="edit-btn" (click)="startEdit()" title="Edit profile">Edit Profile</button>
+          }
+        } @else {
+          <!-- Edit form -->
+          <div class="edit-form">
+            <label class="edit-label">
+              Display Name
+              <input
+                class="edit-input"
+                type="text"
+                [ngModel]="editName()"
+                (ngModelChange)="editName.set($event)"
+                placeholder="Your name"
+                maxlength="80"
+                [disabled]="isSaving()"
+              />
+            </label>
+            <label class="edit-label">
+              Avatar URL
+              <input
+                class="edit-input"
+                type="url"
+                [ngModel]="editAvatarUrl()"
+                (ngModelChange)="editAvatarUrl.set($event)"
+                placeholder="https://…"
+                [disabled]="isSaving()"
+              />
+            </label>
+            @if (saveError()) {
+              <p class="edit-error">{{ saveError() }}</p>
+            }
+            <div class="edit-actions">
+              <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving()">
+                {{ isSaving() ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="cancel-btn" (click)="cancelEdit()" [disabled]="isSaving()">Cancel</button>
+            </div>
+          </div>
         }
       </div>
 
