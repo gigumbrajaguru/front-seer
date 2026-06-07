@@ -23,6 +23,7 @@ jobs:
           node-version: '20'
       - run: npm ci
       - run: npm run build -- --configuration production --base-href "/"
+      - run: cp dist/front-seer/browser/index.html dist/front-seer/browser/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist/front-seer/browser

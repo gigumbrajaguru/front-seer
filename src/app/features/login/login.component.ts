@@ -222,7 +222,7 @@ export class LoginComponent {
   }
 
   signInWithGoogle(): void {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/#/reading';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/reading';
     this.oauthCallback.startGoogleLogin(returnUrl);
   }
 

@@ -9,16 +9,12 @@ const KEY_NONCE = 'seer_oauth_nonce';
 const KEY_RETURN = 'seer_oauth_return';
 
 /**
- * Handles the OAuth implicit-flow redirect that lands back on the SPA root.
+ * Handles OAuth redirects on app startup, before Angular routes activate.
  *
- * Because the app uses HashLocationStrategy the redirect URI is always
- * `<origin>/` (the HTML document root). On startup we check the URL hash
- * for OAuth params *before* Angular routes, process the token, and then
- * replace the hash with the stored return path so the router sees a clean URL.
- *
- * Google Console must have `<origin>/` registered as an authorized redirect URI:
- *   - http://localhost:4200/   (dev)
- *   - https://myseer.xyz/      (prod)
+ * Google uses the backend code-flow: frontend fetches /auth/google/login to get
+ * the auth URL, Google redirects to the backend callback, which sets cookies and
+ * redirects to /?auth=1. APP_INITIALIZER picks that up here, calls /auth/refresh
+ * to read the session, and navigates to the stored return URL.
  */
 @Injectable({ providedIn: 'root' })
 export class OAuthCallbackService {
@@ -29,7 +25,7 @@ export class OAuthCallbackService {
     // Backend code-flow: server sets cookies and redirects here with ?auth=1
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('auth') === '1') {
-      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/#/reading';
+      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/reading';
       sessionStorage.removeItem(KEY_RETURN);
       history.replaceState(null, '', returnUrl);
       await this.authService.loginFromBackendRedirect();
@@ -50,7 +46,7 @@ export class OAuthCallbackService {
     if (!idToken && !error) return;
 
     const provider = sessionStorage.getItem(KEY_PROVIDER);
-    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/#/reading';
+    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/reading';
 
     sessionStorage.removeItem(KEY_PROVIDER);
     sessionStorage.removeItem(KEY_NONCE);
@@ -70,7 +66,7 @@ export class OAuthCallbackService {
     }
   }
 
-  async startGoogleLogin(returnUrl = '/#/reading'): Promise<void> {
+  async startGoogleLogin(returnUrl = '/reading'): Promise<void> {
     sessionStorage.setItem(KEY_RETURN, returnUrl);
     try {
       const resp = await fetch(`${API_BASE}/auth/google/login`);
