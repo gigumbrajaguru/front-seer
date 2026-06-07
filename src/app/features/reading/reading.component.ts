@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize, retry, timer } from 'rxjs';
 import { ReadingService } from '../../core/services/reading.service';
 import { DivinationService, ShuffledCard } from '../../core/services/divination.service';
@@ -10,7 +10,6 @@ import { SystemSelectorComponent } from '../../shared/components/system-selector
 import { SpreadSelectorComponent } from '../../shared/components/spread-selector/spread-selector.component';
 import { QuestionPanelComponent } from '../../shared/components/question-panel/question-panel.component';
 import { StarFieldComponent } from '../../shared/components/star-field/star-field.component';
-import { GoogleLoginComponent } from '../../shared/components/google-login/google-login.component';
 import { SPREAD_CONFIGS, SpreadType } from '../../core/models/spread.model';
 import { DivinationSystem } from '../../core/models/card.model';
 import {
@@ -27,11 +26,11 @@ import { SYSTEM_ICONS, SYSTEM_LABELS } from '../../core/models/oracle.constants'
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     SystemSelectorComponent,
     SpreadSelectorComponent,
     QuestionPanelComponent,
     StarFieldComponent,
-    GoogleLoginComponent,
   ],
   templateUrl: './reading.component.html',
   styleUrl: './reading.component.scss',

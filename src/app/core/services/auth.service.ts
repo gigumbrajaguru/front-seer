@@ -120,7 +120,12 @@ export class AuthService {
           return true;
         }
         if (response.status === 401) {
-          this.clearSession();
+          // Only clear an established session. If CSRF is absent the initial
+          // verify never completed — clearing would sign the user out before
+          // the session was ever established (race on first login).
+          if (this.getCsrfToken()) {
+            this.clearSession();
+          }
         }
         return false;
       } catch {
