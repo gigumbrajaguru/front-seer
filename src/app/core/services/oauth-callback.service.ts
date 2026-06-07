@@ -37,7 +37,7 @@ export class OAuthCallbackService {
     if (!idToken && !error) return;
 
     const provider = sessionStorage.getItem(KEY_PROVIDER);
-    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/';
+    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/#/reading';
 
     sessionStorage.removeItem(KEY_PROVIDER);
     sessionStorage.removeItem(KEY_NONCE);
@@ -57,7 +57,7 @@ export class OAuthCallbackService {
     }
   }
 
-  startGoogleLogin(returnUrl = '/'): void {
+  startGoogleLogin(returnUrl = '/#/reading'): void {
     if (!environment.googleClientId) return;
 
     const nonce = this.generateNonce();

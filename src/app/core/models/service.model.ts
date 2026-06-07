@@ -34,7 +34,7 @@ export const SERVICES: ServiceDef[] = [
     label: 'Oracle Readings',
     blurb: 'Tarot, Lenormand, Runes, I Ching and more — AI-guided spreads tuned to your question.',
     icon: '🔮',
-    route: '/',
+    route: '/reading',
     status: 'live',
     primaryNav: true,
     accent: 'gold',

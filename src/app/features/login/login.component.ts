@@ -96,7 +96,7 @@ import { environment } from '../../../environments/environment';
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: var(--gold, #d4af6a);
+      color: #d4af6a;
       font-family: var(--font-display, serif);
       font-size: 1.7rem;
       letter-spacing: 0.06em;
@@ -112,7 +112,7 @@ import { environment } from '../../../environments/environment';
       margin: 0;
       font-family: var(--font-display, serif);
       font-size: 1.35rem;
-      color: var(--text-primary, #f0ede8);
+      color: #f0e6d3;
       text-align: center;
       letter-spacing: 0.03em;
     }
@@ -120,7 +120,7 @@ import { environment } from '../../../environments/environment';
     .login-sub {
       margin: 0;
       font-size: 0.88rem;
-      color: var(--text-secondary, #a09880);
+      color: rgba(240, 230, 211, 0.65);
       text-align: center;
     }
 
@@ -141,7 +141,7 @@ import { environment } from '../../../environments/environment';
       border-radius: 0.75rem;
       border: 1px solid rgba(255, 255, 255, 0.1);
       background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary, #f0ede8);
+      color: #f0e6d3;
       font-size: 0.92rem;
       font-weight: 500;
       cursor: pointer;
@@ -171,18 +171,18 @@ import { environment } from '../../../environments/environment';
     .no-providers {
       margin: 0;
       text-align: center;
-      color: var(--text-dim, #6b6458);
+      color: rgba(240, 230, 211, 0.4);
       font-size: 0.85rem;
     }
 
     .login-legal {
       margin: 0;
       font-size: 0.75rem;
-      color: var(--text-dim, #6b6458);
+      color: rgba(240, 230, 211, 0.4);
       text-align: center;
 
       a {
-        color: var(--gold, #d4af6a);
+        color: #d4af6a;
         text-decoration: none;
         opacity: 0.8;
 
@@ -192,11 +192,11 @@ import { environment } from '../../../environments/environment';
 
     .back-link {
       font-size: 0.82rem;
-      color: var(--text-dim, #6b6458);
+      color: rgba(240, 230, 211, 0.38);
       text-decoration: none;
       margin-top: 0.3rem;
 
-      &:hover { color: var(--text-secondary, #a09880); }
+      &:hover { color: rgba(240, 230, 211, 0.65); }
     }
   `],
 })
@@ -208,7 +208,7 @@ export class LoginComponent {
 
   constructor() {
     if (this.authService.isAuthenticated()) {
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/reading';
       void this.router.navigateByUrl(returnUrl);
     }
   }
@@ -226,7 +226,7 @@ export class LoginComponent {
   }
 
   signInWithGoogle(): void {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/#/reading';
     this.oauthCallback.startGoogleLogin(returnUrl);
   }
 
