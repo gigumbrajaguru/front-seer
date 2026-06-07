@@ -61,6 +61,29 @@ export class AuthService {
     return this._pendingVerify ?? Promise.resolve();
   }
 
+  /** Called after backend OAuth redirect lands with `?auth=1`. Cookies already set. */
+  async loginFromBackendRedirect(): Promise<void> {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) return;
+      const data = await response.json() as { csrf_token?: string; session_token?: string };
+      this.storeCsrf(data.csrf_token);
+      if (data.session_token) {
+        const p = this.decodeJwt(data.session_token) as unknown as Record<string, string | undefined>;
+        this.persistUser({
+          name: p['name'] ?? '',
+          email: p['email'] ?? '',
+          picture: p['picture'] || p['avatar_url'] || '',
+        });
+      }
+    } catch {
+      // silent — user stays unauthenticated
+    }
+  }
+
   setUserFromCredential(credential: string): void {
     const payload = this.decodeJwt(credential);
     this.persistUser({ name: payload.name, email: payload.email, picture: payload.picture });

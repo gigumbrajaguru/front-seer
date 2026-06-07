@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
+const API_BASE = environment.apiBaseUrl.replace(/\/+$/, '');
+
 const KEY_PROVIDER = 'seer_oauth_provider';
 const KEY_NONCE = 'seer_oauth_nonce';
 const KEY_RETURN = 'seer_oauth_return';
@@ -24,6 +26,17 @@ export class OAuthCallbackService {
 
   /** Called once from APP_INITIALIZER before Angular routes. */
   async handleCallbackOnStartup(): Promise<void> {
+    // Backend code-flow: server sets cookies and redirects here with ?auth=1
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('auth') === '1') {
+      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/#/reading';
+      sessionStorage.removeItem(KEY_RETURN);
+      history.replaceState(null, '', returnUrl);
+      await this.authService.loginFromBackendRedirect();
+      return;
+    }
+
+    // Legacy implicit flow: id_token returned in URL hash
     const raw = window.location.hash.startsWith('#')
       ? window.location.hash.slice(1)
       : window.location.hash;
@@ -53,29 +66,20 @@ export class OAuthCallbackService {
         await this.authService.whenReady();
       }
     } catch {
-      // If token processing fails, continue unauthenticated
+      // continue unauthenticated
     }
   }
 
-  startGoogleLogin(returnUrl = '/#/reading'): void {
-    if (!environment.googleClientId) return;
-
-    const nonce = this.generateNonce();
-    sessionStorage.setItem(KEY_PROVIDER, 'google');
-    sessionStorage.setItem(KEY_NONCE, nonce);
+  async startGoogleLogin(returnUrl = '/#/reading'): Promise<void> {
     sessionStorage.setItem(KEY_RETURN, returnUrl);
-
-    const params = new URLSearchParams({
-      client_id: environment.googleClientId,
-      redirect_uri: `${window.location.origin}/`,
-      response_type: 'id_token',
-      scope: 'openid email profile',
-      nonce,
-    });
-
-    window.location.assign(
-      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
-    );
+    try {
+      const resp = await fetch(`${API_BASE}/auth/google/login`);
+      if (!resp.ok) return;
+      const data = await resp.json() as { auth_url: string };
+      window.location.assign(data.auth_url);
+    } catch {
+      // silent — user stays on login page
+    }
   }
 
   hasGoogleClientId(): boolean {
