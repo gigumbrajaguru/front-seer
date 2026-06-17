@@ -95,6 +95,10 @@ export class AuthService {
     this._pendingVerify = this.verifyWithBackend(provider, token);
   }
 
+  setUserFromProfileHint(name: string, email: string, picture: string): void {
+    this.persistUser({ name, email, picture });
+  }
+
   setManualUser(name: string, email: string): void {
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();

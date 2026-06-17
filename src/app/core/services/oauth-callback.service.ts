@@ -28,6 +28,7 @@ export class OAuthCallbackService {
       const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
       sessionStorage.removeItem(KEY_RETURN);
       history.replaceState(null, '', returnUrl);
+      this.applyProfileHintCookie();
       void this.authService.loginFromBackendRedirect();
       return;
     }
@@ -76,6 +77,20 @@ export class OAuthCallbackService {
     } catch {
       // silent — user stays on login page
     }
+  }
+
+  private applyProfileHintCookie(): void {
+    const match = document.cookie.match(/(?:^|; )seer_profile=([^;]*)/);
+    if (!match) return;
+    try {
+      const data = JSON.parse(decodeURIComponent(match[1])) as {
+        name?: string; email?: string; picture?: string;
+      };
+      if (data.name || data.email) {
+        this.authService.setUserFromProfileHint(data.name ?? '', data.email ?? '', data.picture ?? '');
+      }
+    } catch { /* ignore malformed cookie */ }
+    document.cookie = 'seer_profile=; max-age=0; path=/';
   }
 
   hasGoogleClientId(): boolean {
