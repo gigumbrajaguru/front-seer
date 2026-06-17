@@ -7,6 +7,7 @@ import {
   BackendProfile,
   QuestionHistoryItem,
   ReadingHistoryItem,
+  DashboardResponse,
 } from '../../core/services/user.service';
 import { SYSTEM_ICONS, SYSTEM_LABELS } from '../../core/models/oracle.constants';
 import { DivinationSystem } from '../../core/models/card.model';
@@ -80,19 +81,11 @@ export class ProfileComponent implements OnInit {
     if (!authed) return;
 
     this.isLoading.set(true);
-    this.userService.getProfile().subscribe({
-      next: (profile) => this.backendProfile.set(profile),
-      error: () => undefined,
-    });
-
-    this.userService.getQuestions().subscribe({
-      next: (res) => this.questions.set(res.questions),
-      error: () => undefined,
-    });
-
-    this.userService.getReadings().subscribe({
-      next: (res) => {
-        this.readings.set(res.readings);
+    this.userService.getDashboard().subscribe({
+      next: (data: DashboardResponse) => {
+        this.backendProfile.set(data.profile);
+        this.questions.set(data.questions);
+        this.readings.set(data.readings);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),

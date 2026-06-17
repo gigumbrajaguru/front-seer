@@ -39,6 +39,14 @@ export interface ReadingsResponse {
   total: number;
 }
 
+export interface DashboardResponse {
+  profile: BackendProfile;
+  questions: QuestionHistoryItem[];
+  readings: ReadingHistoryItem[];
+  question_total: number;
+  reading_total: number;
+}
+
 export interface UpdateProfileRequest {
   name?: string;
   avatar_url?: string;
@@ -50,6 +58,10 @@ export class UserService {
   private readonly baseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
 
   // Auth headers + refresh-on-401 are applied by the authInterceptor.
+
+  getDashboard(): Observable<DashboardResponse> {
+    return this.http.get<DashboardResponse>(`${this.baseUrl}/api/user/dashboard`);
+  }
 
   getProfile(): Observable<BackendProfile> {
     return this.http.get<BackendProfile>(`${this.baseUrl}/api/user/profile`);
