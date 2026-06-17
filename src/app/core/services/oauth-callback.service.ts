@@ -25,7 +25,7 @@ export class OAuthCallbackService {
     // Backend code-flow: server sets cookies and redirects here with ?auth=1
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('auth') === '1') {
-      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/reading';
+      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
       sessionStorage.removeItem(KEY_RETURN);
       history.replaceState(null, '', returnUrl);
       void this.authService.loginFromBackendRedirect();
@@ -46,7 +46,7 @@ export class OAuthCallbackService {
     if (!idToken && !error) return;
 
     const provider = sessionStorage.getItem(KEY_PROVIDER);
-    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/reading';
+    const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
 
     sessionStorage.removeItem(KEY_PROVIDER);
     sessionStorage.removeItem(KEY_NONCE);
@@ -66,7 +66,7 @@ export class OAuthCallbackService {
     }
   }
 
-  async startGoogleLogin(returnUrl = '/reading'): Promise<void> {
+  async startGoogleLogin(returnUrl = '/profile'): Promise<void> {
     sessionStorage.setItem(KEY_RETURN, returnUrl);
     try {
       const resp = await fetch(`${API_BASE}/auth/google/login`);

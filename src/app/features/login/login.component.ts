@@ -204,7 +204,7 @@ export class LoginComponent {
 
   constructor() {
     if (this.authService.isAuthenticated()) {
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/reading';
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
       void this.router.navigateByUrl(returnUrl);
     }
   }
@@ -222,7 +222,7 @@ export class LoginComponent {
   }
 
   signInWithGoogle(): void {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/reading';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
     this.oauthCallback.startGoogleLogin(returnUrl);
   }
 
