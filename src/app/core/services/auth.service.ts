@@ -72,7 +72,7 @@ export class AuthService {
       const data = await response.json() as { csrf_token?: string; session_token?: string };
       this.storeCsrf(data.csrf_token);
       if (data.session_token) {
-        const p = this.decodeJwt(data.session_token) as unknown as Record<string, string | undefined>;
+        const p = this.decodeJwt(data.session_token);
         this.persistUser({
           name: p['name'] ?? '',
           email: p['email'] ?? '',
@@ -85,8 +85,11 @@ export class AuthService {
   }
 
   setUserFromCredential(credential: string): void {
-    const payload = this.decodeJwt(credential);
-    this.persistUser({ name: payload.name, email: payload.email, picture: payload.picture });
+    const p = this.decodeJwt(credential) as Record<string, string>;
+    // Google id_token fields: name (full), given_name, family_name, email, picture
+    const name = p['name'] || `${p['given_name'] ?? ''} ${p['family_name'] ?? ''}`.trim() || p['email'] || '';
+    const picture = p['picture'] || '';
+    this.persistUser({ name, email: p['email'] ?? '', picture });
     this._pendingVerify = this.verifyWithBackend('google', credential);
   }
 
@@ -202,7 +205,7 @@ export class AuthService {
     localStorage.removeItem(this.CSRF_KEY);
   }
 
-  private decodeJwt(token: string): { name: string; email: string; picture: string } {
+  private decodeJwt(token: string): Record<string, string> {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(

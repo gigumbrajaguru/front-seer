@@ -223,7 +223,35 @@ export class LoginComponent {
 
   signInWithGoogle(): void {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
-    this.oauthCallback.startGoogleLogin(returnUrl);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gis = (window as any)['google']?.accounts?.id;
+    if (!gis) {
+      // GIS script not yet loaded — use backend redirect
+      this.oauthCallback.startGoogleLogin(returnUrl);
+      return;
+    }
+
+    gis.initialize({
+      client_id: environment.googleClientId,
+      // GIS delivers name/email/picture in the id_token payload — no extra API call needed
+      callback: (resp: { credential: string }) => {
+        this.authService.setUserFromCredential(resp.credential);
+        void this.authService.whenReady().then(() => {
+          void this.router.navigateByUrl(returnUrl);
+        });
+      },
+      auto_select: false,
+      context: 'signin',
+      itp_support: true,
+    });
+
+    gis.prompt((notification: { isNotDisplayed(): boolean }) => {
+      // One Tap couldn't show (browser blocked, 3P cookies, etc.) — fall back to redirect
+      if (notification.isNotDisplayed()) {
+        this.oauthCallback.startGoogleLogin(returnUrl);
+      }
+    });
   }
 
   signInWithFacebook(): void {
