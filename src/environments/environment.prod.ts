@@ -5,5 +5,5 @@ export const environment = {
   facebookClientId: '',
   tiktokClientKey: '',
   discordClientId: '',
-  linkedinClientId: '',
+  linkedinClientId: '8679fpkltp6hav',
 };
