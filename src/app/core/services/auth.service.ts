@@ -102,17 +102,6 @@ export class AuthService {
     this.persistUser({ name, email, picture });
   }
 
-  setManualUser(name: string, email: string): void {
-    const normalizedName = name.trim();
-    const normalizedEmail = email.trim().toLowerCase();
-    const avatarSeed = encodeURIComponent(normalizedName || normalizedEmail || 'Seer');
-    this.persistUser({
-      name: normalizedName,
-      email: normalizedEmail,
-      picture: `https://ui-avatars.com/api/?name=${avatarSeed}&background=1e1b38&color=d4af6a`,
-    });
-  }
-
   logout(): void {
     const headers: Record<string, string> = {};
     const csrf = this.getCsrfToken();

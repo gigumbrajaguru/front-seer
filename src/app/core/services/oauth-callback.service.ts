@@ -5,7 +5,6 @@ import { environment } from '../../../environments/environment';
 const API_BASE = environment.apiBaseUrl.replace(/\/+$/, '');
 
 const KEY_PROVIDER = 'seer_oauth_provider';
-const KEY_NONCE = 'seer_oauth_nonce';
 const KEY_RETURN = 'seer_oauth_return';
 
 /**
@@ -50,7 +49,6 @@ export class OAuthCallbackService {
     const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
 
     sessionStorage.removeItem(KEY_PROVIDER);
-    sessionStorage.removeItem(KEY_NONCE);
     sessionStorage.removeItem(KEY_RETURN);
 
     history.replaceState(null, '', returnUrl);
@@ -98,9 +96,4 @@ export class OAuthCallbackService {
     return !!id && !id.includes('YOUR_GOOGLE_CLIENT_ID') && id.endsWith('.apps.googleusercontent.com');
   }
 
-  private generateNonce(): string {
-    const arr = new Uint8Array(16);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
-  }
 }
