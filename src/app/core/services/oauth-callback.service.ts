@@ -28,7 +28,7 @@ export class OAuthCallbackService {
       const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/reading';
       sessionStorage.removeItem(KEY_RETURN);
       history.replaceState(null, '', returnUrl);
-      await this.authService.loginFromBackendRedirect();
+      void this.authService.loginFromBackendRedirect();
       return;
     }
 
