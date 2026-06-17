@@ -225,33 +225,62 @@ export class LoginComponent {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const gis = (window as any)['google']?.accounts?.id;
-    if (!gis) {
-      // GIS script not yet loaded — use backend redirect
+    const oauth2 = (window as any)['google']?.accounts?.oauth2;
+    if (!oauth2) {
+      // GIS not loaded yet — use backend redirect as fallback
       this.oauthCallback.startGoogleLogin(returnUrl);
       return;
     }
 
-    gis.initialize({
+    // initTokenClient opens a REAL Google popup window (not One Tap overlay).
+    // Works reliably across browsers because it runs inside the user-gesture context.
+    const tokenClient = oauth2.initTokenClient({
       client_id: environment.googleClientId,
-      // GIS delivers name/email/picture in the id_token payload — no extra API call needed
-      callback: (resp: { credential: string }) => {
-        this.authService.setUserFromCredential(resp.credential);
+      scope: 'openid email profile',
+      callback: (tokenResponse: { access_token?: string; error?: string }) => {
+        if (!tokenResponse.access_token) return; // user cancelled — stay on login
+        this.handleGoogleAccessToken(tokenResponse.access_token, returnUrl);
+      },
+    });
+
+    // Triggers the popup immediately — must be called inside user gesture (button click).
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+
+  private handleGoogleAccessToken(accessToken: string, returnUrl: string): void {
+    // Fetch Google profile directly in the browser — instant access to name/email/picture.
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then(r => r.json() as Promise<{ name?: string; given_name?: string; family_name?: string; email?: string; picture?: string }>)
+      .then(profile => {
+        const name =
+          profile.name ||
+          `${profile.given_name ?? ''} ${profile.family_name ?? ''}`.trim() ||
+          profile.email ||
+          '';
+        // Instantly store profile data — avatar/name visible before backend responds.
+        // Also fires /auth/verify/google with the access token to create the session.
+        this.authService.setUserFromProviderToken('google', accessToken, {
+          name,
+          email: profile.email ?? '',
+          picture: profile.picture ?? '',
+        });
         void this.authService.whenReady().then(() => {
           void this.router.navigateByUrl(returnUrl);
         });
-      },
-      auto_select: false,
-      context: 'signin',
-      itp_support: true,
-    });
-
-    gis.prompt((notification: { isNotDisplayed(): boolean }) => {
-      // One Tap couldn't show (browser blocked, 3P cookies, etc.) — fall back to redirect
-      if (notification.isNotDisplayed()) {
-        this.oauthCallback.startGoogleLogin(returnUrl);
-      }
-    });
+      })
+      .catch(() => {
+        // Userinfo failed — create session anyway, profile fills in from backend later
+        this.authService.setUserFromProviderToken('google', accessToken, {
+          name: '',
+          email: '',
+          picture: '',
+        });
+        void this.authService.whenReady().then(() => {
+          void this.router.navigateByUrl(returnUrl);
+        });
+      });
   }
 
   signInWithFacebook(): void {
