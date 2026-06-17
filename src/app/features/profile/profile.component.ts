@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -65,11 +65,21 @@ export class ProfileComponent implements OnInit {
     return d ? this.formatDate(d) : null;
   });
 
-  ngOnInit(): void {
-    if (this.user()) {
-      this.loadData();
-    }
+  private _loaded = false;
+
+  constructor() {
+    // On fresh login the fire-and-forget /auth/refresh hasn't completed when
+    // ngOnInit runs, so user() is null and loadData() would never fire.
+    // This effect re-runs when the signal becomes non-null (e.g. after refresh).
+    effect(() => {
+      if (this.user() && !this._loaded) {
+        this._loaded = true;
+        this.loadData();
+      }
+    });
   }
+
+  ngOnInit(): void {}
 
   setTab(tab: ProfileTab): void {
     this.activeTab.set(tab);
