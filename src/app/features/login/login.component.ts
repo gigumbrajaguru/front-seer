@@ -35,7 +35,7 @@ import { environment } from '../../../environments/environment';
           }
 
           @if (hasFacebook()) {
-            <button type="button" class="provider-btn facebook" (click)="signInWithFacebook()">
+            <button type="button" class="provider-btn facebook" (click)="signInWith('facebook')">
               <svg class="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
@@ -43,12 +43,30 @@ import { environment } from '../../../environments/environment';
             </button>
           }
 
+          @if (hasLinkedIn()) {
+            <button type="button" class="provider-btn linkedin" (click)="signInWith('linkedin')">
+              <svg class="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              Continue with LinkedIn
+            </button>
+          }
+
           @if (hasDiscord()) {
-            <button type="button" class="provider-btn discord" (click)="signInWithDiscord()">
+            <button type="button" class="provider-btn discord" (click)="signInWith('discord')">
               <svg class="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#5865F2" d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026c.462-.62.874-1.275 1.226-1.963.021-.04.001-.088-.041-.104a13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028z"/>
               </svg>
               Continue with Discord
+            </button>
+          }
+
+          @if (hasTikTok()) {
+            <button type="button" class="provider-btn tiktok" (click)="signInWith('tiktok')">
+              <svg class="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#010101" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.84a8.17 8.17 0 0 0 4.78 1.52V6.91a4.85 4.85 0 0 1-1.01-.22z"/>
+              </svg>
+              Continue with TikTok
             </button>
           }
         </div>
@@ -154,9 +172,11 @@ import { environment } from '../../../environments/environment';
       }
     }
 
-    .google:hover { border-color: rgba(66, 133, 244, 0.5); }
+    .google:hover   { border-color: rgba(66, 133, 244, 0.5); }
     .facebook:hover { border-color: rgba(24, 119, 242, 0.5); }
-    .discord:hover { border-color: rgba(88, 101, 242, 0.5); }
+    .linkedin:hover { border-color: rgba(10, 102, 194, 0.5); }
+    .discord:hover  { border-color: rgba(88, 101, 242, 0.5); }
+    .tiktok:hover   { border-color: rgba(254, 44,  85,  0.5); }
 
     .provider-icon {
       width: 1.2rem;
@@ -209,46 +229,36 @@ export class LoginComponent {
     }
   }
 
-  hasGoogle(): boolean {
-    return this.oauthCallback.hasGoogleClientId();
+  private returnUrl(): string {
+    return this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
   }
 
-  hasFacebook(): boolean {
-    return !!environment.facebookClientId;
-  }
-
-  hasDiscord(): boolean {
-    return !!environment.discordClientId;
-  }
+  hasGoogle(): boolean   { return this.oauthCallback.hasGoogleClientId(); }
+  hasFacebook(): boolean { return !!environment.facebookClientId; }
+  hasLinkedIn(): boolean { return !!environment.linkedinClientId; }
+  hasDiscord(): boolean  { return !!environment.discordClientId; }
+  hasTikTok(): boolean   { return !!environment.tiktokClientKey; }
 
   signInWithGoogle(): void {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
-
+    const returnUrl = this.returnUrl();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const oauth2 = (window as any)['google']?.accounts?.oauth2;
     if (!oauth2) {
-      // GIS not loaded yet — use backend redirect as fallback
-      this.oauthCallback.startGoogleLogin(returnUrl);
+      void this.oauthCallback.startRedirectLogin('google');
       return;
     }
-
-    // initTokenClient opens a REAL Google popup window (not One Tap overlay).
-    // Works reliably across browsers because it runs inside the user-gesture context.
     const tokenClient = oauth2.initTokenClient({
       client_id: environment.googleClientId,
       scope: 'openid email profile',
       callback: (tokenResponse: { access_token?: string; error?: string }) => {
-        if (!tokenResponse.access_token) return; // user cancelled — stay on login
+        if (!tokenResponse.access_token) return;
         this.handleGoogleAccessToken(tokenResponse.access_token, returnUrl);
       },
     });
-
-    // Triggers the popup immediately — must be called inside user gesture (button click).
     tokenClient.requestAccessToken({ prompt: '' });
   }
 
   private handleGoogleAccessToken(accessToken: string, returnUrl: string): void {
-    // Fetch Google profile directly in the browser — instant access to name/email/picture.
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -257,47 +267,22 @@ export class LoginComponent {
         const name =
           profile.name ||
           `${profile.given_name ?? ''} ${profile.family_name ?? ''}`.trim() ||
-          profile.email ||
-          '';
-        // Instantly store profile data — avatar/name visible before backend responds.
-        // Also fires /auth/verify/google with the access token to create the session.
+          profile.email || '';
         this.authService.setUserFromProviderToken('google', accessToken, {
-          name,
-          email: profile.email ?? '',
-          picture: profile.picture ?? '',
+          name, email: profile.email ?? '', picture: profile.picture ?? '',
         });
-        void this.authService.whenReady().then(() => {
-          void this.router.navigateByUrl(returnUrl);
-        });
+        void this.authService.whenReady().then(() => void this.router.navigateByUrl(returnUrl));
       })
       .catch(() => {
-        // Userinfo failed — create session anyway, profile fills in from backend later
-        this.authService.setUserFromProviderToken('google', accessToken, {
-          name: '',
-          email: '',
-          picture: '',
-        });
-        void this.authService.whenReady().then(() => {
-          void this.router.navigateByUrl(returnUrl);
-        });
+        this.authService.setUserFromProviderToken('google', accessToken, { name: '', email: '', picture: '' });
+        void this.authService.whenReady().then(() => void this.router.navigateByUrl(returnUrl));
       });
   }
 
-  signInWithFacebook(): void {
-    if (!environment.facebookClientId) return;
-    const redirectUri = `${window.location.origin}/`;
-    const scope = encodeURIComponent('email,public_profile');
-    window.location.assign(
-      `https://www.facebook.com/v23.0/dialog/oauth?client_id=${encodeURIComponent(environment.facebookClientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`,
-    );
-  }
-
-  signInWithDiscord(): void {
-    if (!environment.discordClientId) return;
-    const redirectUri = `${window.location.origin}/`;
-    const scope = encodeURIComponent('identify email');
-    window.location.assign(
-      `https://discord.com/oauth2/authorize?client_id=${encodeURIComponent(environment.discordClientId)}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}`,
-    );
+  /** Unified handler for all backend-popup providers (Facebook, LinkedIn, Discord, TikTok). */
+  async signInWith(provider: string): Promise<void> {
+    const returnUrl = this.returnUrl();
+    const ok = await this.oauthCallback.startPopupLogin(provider, returnUrl);
+    if (ok) void this.router.navigateByUrl(returnUrl);
   }
 }

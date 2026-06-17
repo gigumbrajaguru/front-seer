@@ -3,78 +3,122 @@ import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
 const API_BASE = environment.apiBaseUrl.replace(/\/+$/, '');
-
-const KEY_PROVIDER = 'seer_oauth_provider';
 const KEY_RETURN = 'seer_oauth_return';
 
 /**
- * Handles OAuth redirects on app startup, before Angular routes activate.
+ * Handles OAuth flows using a backend-popup pattern:
  *
- * Google uses the backend code-flow: frontend fetches /auth/google/login to get
- * the auth URL, Google redirects to the backend callback, which sets cookies and
- * redirects to /?auth=1. APP_INITIALIZER picks that up here, calls /auth/refresh
- * to read the session, and navigates to the stored return URL.
+ * 1. Parent opens a blank popup immediately (preserves user-gesture context).
+ * 2. Parent fetches the backend auth URL and navigates the popup to it.
+ * 3. Provider authenticates → backend callback exchanges code → sets httpOnly
+ *    cookies + seer_profile hint cookie → 302 to /?auth=1.
+ * 4. Angular boots in the popup, APP_INITIALIZER detects ?auth=1 + window.opener
+ *    → postMessages 'seer_auth_success' to parent → closes.
+ * 5. Parent receives message → reads profile hint cookie → calls /auth/refresh
+ *    → navigates.
+ *
+ * Google uses google.accounts.oauth2.initTokenClient (direct popup, no redirect)
+ * for an instant access token. This service handles the redirect fallback and
+ * all other providers.
  */
 @Injectable({ providedIn: 'root' })
 export class OAuthCallbackService {
   private readonly authService = inject(AuthService);
 
-  /** Called once from APP_INITIALIZER before Angular routes. */
+  /** Called once from APP_INITIALIZER before Angular routes activate. */
   async handleCallbackOnStartup(): Promise<void> {
-    // Backend code-flow: server sets cookies and redirects here with ?auth=1
     const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get('auth') === '1') {
-      const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
-      sessionStorage.removeItem(KEY_RETURN);
-      history.replaceState(null, '', returnUrl);
-      this.applyProfileHintCookie();
-      void this.authService.loginFromBackendRedirect();
+    if (searchParams.get('auth') !== '1') return;
+
+    if (window.opener && !window.opener.closed) {
+      // Running inside a popup — signal the parent and close.
+      try {
+        window.opener.postMessage({ type: 'seer_auth_success' }, window.location.origin);
+      } catch {
+        // opener may have navigated away; ignore
+      }
+      window.close();
       return;
     }
 
-    // Legacy implicit flow: id_token returned in URL hash
-    const raw = window.location.hash.startsWith('#')
-      ? window.location.hash.slice(1)
-      : window.location.hash;
-
-    if (!raw) return;
-
-    const params = new URLSearchParams(raw);
-    const idToken = params.get('id_token');
-    const error = params.get('error');
-
-    if (!idToken && !error) return;
-
-    const provider = sessionStorage.getItem(KEY_PROVIDER);
+    // Full-page redirect (Google fallback path): handle locally.
     const returnUrl = sessionStorage.getItem(KEY_RETURN) ?? '/profile';
-
-    sessionStorage.removeItem(KEY_PROVIDER);
     sessionStorage.removeItem(KEY_RETURN);
-
     history.replaceState(null, '', returnUrl);
-
-    if (error || !provider || !idToken) return;
-
-    try {
-      if (provider === 'google') {
-        this.authService.setUserFromCredential(idToken);
-        await this.authService.whenReady();
-      }
-    } catch {
-      // continue unauthenticated
-    }
+    this.applyProfileHintCookie();
+    void this.authService.loginFromBackendRedirect();
   }
 
-  async startGoogleLogin(returnUrl = '/profile'): Promise<void> {
+  /**
+   * Opens a popup for any backend-handled OAuth provider.
+   * Returns true when auth completes, false when the user cancels.
+   * Falls back to a full-page redirect if the browser blocks the popup.
+   */
+  async startPopupLogin(provider: string, returnUrl: string): Promise<boolean> {
     sessionStorage.setItem(KEY_RETURN, returnUrl);
+
+    // Open immediately inside the click handler — avoids Safari/Firefox blocking
+    // window.open() called after an await.
+    const popup = window.open('', 'seer_oauth', 'width=520,height=660,scrollbars=yes,resizable=yes');
+    if (!popup) {
+      // Popup blocked — degrade to full-page redirect (no return value).
+      await this.startRedirectLogin(provider);
+      return false;
+    }
+
     try {
-      const resp = await fetch(`${API_BASE}/auth/google/login`);
+      const resp = await fetch(`${API_BASE}/auth/${provider}/login`);
+      if (!resp.ok) { popup.close(); return false; }
+      const data = await resp.json() as { auth_url: string };
+      popup.location.assign(data.auth_url);
+    } catch {
+      popup.close();
+      return false;
+    }
+
+    return new Promise<boolean>(resolve => {
+      let settled = false;
+
+      const done = (success: boolean): void => {
+        if (settled) return;
+        settled = true;
+        clearInterval(closedPoll);
+        window.removeEventListener('message', onMessage);
+        if (success) {
+          this.applyProfileHintCookie();
+          void this.authService.loginFromBackendRedirect().then(() => resolve(true));
+        } else {
+          resolve(false);
+        }
+      };
+
+      const onMessage = (event: MessageEvent): void => {
+        if (event.origin !== window.location.origin) return;
+        if ((event.data as { type?: string })?.type === 'seer_auth_success') done(true);
+      };
+
+      // Detect user closing the popup without completing auth.
+      const closedPoll = setInterval(() => { if (popup.closed) done(false); }, 500);
+
+      window.addEventListener('message', onMessage);
+    });
+  }
+
+  /** Full-page redirect for any provider (used as popup-blocked fallback). */
+  async startRedirectLogin(provider: string): Promise<void> {
+    try {
+      const resp = await fetch(`${API_BASE}/auth/${provider}/login`);
       if (!resp.ok) return;
       const data = await resp.json() as { auth_url: string };
       window.location.assign(data.auth_url);
     } catch {
       // silent — user stays on login page
     }
+  }
+
+  hasGoogleClientId(): boolean {
+    const id = environment.googleClientId?.trim() ?? '';
+    return !!id && !id.includes('YOUR_GOOGLE_CLIENT_ID') && id.endsWith('.apps.googleusercontent.com');
   }
 
   private applyProfileHintCookie(): void {
@@ -90,10 +134,4 @@ export class OAuthCallbackService {
     } catch { /* ignore malformed cookie */ }
     document.cookie = 'seer_profile=; max-age=0; path=/';
   }
-
-  hasGoogleClientId(): boolean {
-    const id = environment.googleClientId?.trim() ?? '';
-    return !!id && !id.includes('YOUR_GOOGLE_CLIENT_ID') && id.endsWith('.apps.googleusercontent.com');
-  }
-
 }
