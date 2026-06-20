@@ -6,8 +6,9 @@ const API_BASE = environment.apiBaseUrl.replace(/\/+$/, '');
 const KEY_RETURN = 'seer_oauth_return';
 
 /**
- * Handles OAuth flows using a backend-popup pattern:
+ * Handles OAuth flows via two patterns:
  *
+ * Popup pattern (Facebook, Discord, TikTok, Google fallback):
  * 1. Parent opens a blank popup immediately (preserves user-gesture context).
  * 2. Parent fetches the backend auth URL and navigates the popup to it.
  * 3. Provider authenticates → backend callback exchanges code → sets httpOnly
@@ -17,9 +18,15 @@ const KEY_RETURN = 'seer_oauth_return';
  * 5. Parent receives message → reads profile hint cookie → calls /auth/refresh
  *    → navigates.
  *
- * Google uses google.accounts.oauth2.initTokenClient (direct popup, no redirect)
- * for an instant access token. This service handles the redirect fallback and
- * all other providers.
+ * Redirect pattern (LinkedIn, popup-blocked fallback):
+ * 1. returnUrl saved to sessionStorage.
+ * 2. Full page navigates to provider auth URL.
+ * 3. Same backend callback sets cookies → 302 to /?auth=1.
+ * 4. Angular boots in the main window, APP_INITIALIZER detects ?auth=1 without
+ *    window.opener → reads returnUrl from sessionStorage → restores history.
+ *
+ * Google uses google.accounts.id (One Tap / FedCM) which returns an ID token
+ * directly to a JS callback — no redirect or popup needed.
  */
 @Injectable({ providedIn: 'root' })
 export class OAuthCallbackService {
@@ -104,8 +111,15 @@ export class OAuthCallbackService {
     });
   }
 
-  /** Full-page redirect for any provider (used as popup-blocked fallback). */
-  async startRedirectLogin(provider: string): Promise<void> {
+  /**
+   * Full-page redirect for any provider.
+   * Pass returnUrl when calling directly (e.g. LinkedIn); omit when called as
+   * the popup-blocked fallback (startPopupLogin already saved returnUrl).
+   */
+  async startRedirectLogin(provider: string, returnUrl?: string): Promise<void> {
+    if (returnUrl !== undefined) {
+      sessionStorage.setItem(KEY_RETURN, returnUrl);
+    }
     try {
       const resp = await fetch(`${API_BASE}/auth/${provider}/login`);
       if (!resp.ok) return;

@@ -271,9 +271,14 @@ export class LoginComponent {
     });
   }
 
-  /** Unified handler for all backend-popup providers (Google fallback, Facebook, LinkedIn, Discord, TikTok). */
   async signInWith(provider: string): Promise<void> {
     const returnUrl = this.returnUrl();
+    if (provider === 'linkedin') {
+      // LinkedIn's multi-hop auth flow is unreliable in a popup window;
+      // full-page redirect is the suitable path for this provider.
+      await this.oauthCallback.startRedirectLogin(provider, returnUrl);
+      return;
+    }
     const ok = await this.oauthCallback.startPopupLogin(provider, returnUrl);
     if (ok) void this.router.navigateByUrl(returnUrl);
   }
