@@ -242,44 +242,36 @@ export class LoginComponent {
   signInWithGoogle(): void {
     const returnUrl = this.returnUrl();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const oauth2 = (window as any)['google']?.accounts?.oauth2;
-    if (!oauth2) {
-      void this.oauthCallback.startRedirectLogin('google');
+    const googleId = (window as any)['google']?.accounts?.id;
+
+    if (!googleId) {
+      void this.signInWith('google');
       return;
     }
-    const tokenClient = oauth2.initTokenClient({
+
+    googleId.initialize({
       client_id: environment.googleClientId,
-      scope: 'openid email profile',
-      callback: (tokenResponse: { access_token?: string; error?: string }) => {
-        if (!tokenResponse.access_token) return;
-        this.handleGoogleAccessToken(tokenResponse.access_token, returnUrl);
+      callback: (response: { credential: string }) => {
+        // credential is a signed ID token — name/email/picture are in its payload
+        this.authService.setUserFromCredential(response.credential);
+        void this.authService.whenReady().then(() => void this.router.navigateByUrl(returnUrl));
       },
+      auto_select: true,
+      use_fedcm_for_prompt: true,
+      context: 'signin',
     });
-    tokenClient.requestAccessToken({ prompt: '' });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    googleId.prompt((notification: any) => {
+      // One Tap suppressed (too many dismissals, FedCM unavailable, etc.)
+      // Fall back to the backend popup/redirect flow.
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        void this.signInWith('google');
+      }
+    });
   }
 
-  private handleGoogleAccessToken(accessToken: string, returnUrl: string): void {
-    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-      .then(r => r.json() as Promise<{ name?: string; given_name?: string; family_name?: string; email?: string; picture?: string }>)
-      .then(profile => {
-        const name =
-          profile.name ||
-          `${profile.given_name ?? ''} ${profile.family_name ?? ''}`.trim() ||
-          profile.email || '';
-        this.authService.setUserFromProviderToken('google', accessToken, {
-          name, email: profile.email ?? '', picture: profile.picture ?? '',
-        });
-        void this.authService.whenReady().then(() => void this.router.navigateByUrl(returnUrl));
-      })
-      .catch(() => {
-        this.authService.setUserFromProviderToken('google', accessToken, { name: '', email: '', picture: '' });
-        void this.authService.whenReady().then(() => void this.router.navigateByUrl(returnUrl));
-      });
-  }
-
-  /** Unified handler for all backend-popup providers (Facebook, LinkedIn, Discord, TikTok). */
+  /** Unified handler for all backend-popup providers (Google fallback, Facebook, LinkedIn, Discord, TikTok). */
   async signInWith(provider: string): Promise<void> {
     const returnUrl = this.returnUrl();
     const ok = await this.oauthCallback.startPopupLogin(provider, returnUrl);
