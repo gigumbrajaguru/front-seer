@@ -17,6 +17,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   facebook: 'Facebook',
   discord: 'Discord',
   tiktok: 'TikTok',
+  linkedin: 'LinkedIn',
+  x: 'X',
 };
 
 type ProfileTab = 'overview' | 'questions' | 'readings';
@@ -110,7 +112,7 @@ export class ProfileComponent implements OnInit {
   }
 
   avatarFallback(name: string | undefined): string {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'S')}&background=1e1b38&color=d4af6a`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'S')}&background=ece5d9&color=9e7430&bold=true`;
   }
 
   onAvatarError(event: Event): void {
